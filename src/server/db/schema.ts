@@ -1,7 +1,9 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   index,
+  primaryKey,
   integer,
   jsonb,
   pgTable,
@@ -177,6 +179,16 @@ export const guides = pgTable(
     index("guides_source_idx").on(table.sourceName),
     index("guides_published_idx").on(table.publishedAt),
   ],
+);
+
+export const rateLimits = pgTable(
+  "rate_limits",
+  {
+    ip: varchar("ip", { length: 64 }).notNull(),
+    day: date("day").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.ip, table.day] })],
 );
 
 export const corrections = pgTable("corrections", {

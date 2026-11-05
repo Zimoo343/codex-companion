@@ -21,3 +21,7 @@ spikes/manifest-probe/game.db
 .DS_Store
 Thumbs.db
 
+
+.next/
+.vercel/
+next-env.d.ts

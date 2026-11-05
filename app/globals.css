@@ -1,0 +1,152 @@
+:root {
+  color-scheme: dark;
+  --bg: #0d0f12;
+  --panel: #151a21;
+  --border: #232b36;
+  --text: #e7ecf3;
+  --muted: #93a1b5;
+  --accent: #6ee7b7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  line-height: 1.55;
+}
+
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 20px 96px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin: 0 0 28px;
+  font-size: 15px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input,
+.code {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.input:focus,
+.code:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.button {
+  background: var(--accent);
+  color: #06251b;
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.answer,
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-top: 22px;
+}
+
+.answer p {
+  margin: 0 0 12px;
+  white-space: pre-wrap;
+}
+
+.answer p:last-child {
+  margin-bottom: 0;
+}
+
+.sources {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sources a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.sources span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.error {
+  color: #fca5a5;
+  margin-top: 16px;
+}
+
+.footer {
+  margin-top: 34px;
+  color: var(--muted);
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.footer a {
+  color: var(--muted);
+}

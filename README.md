@@ -8,6 +8,20 @@ from Bungie's manifest and community spreadsheets. Patch notes and the wiki are
 retrieved by meaning, not keywords. Every answer names its sources and states how
 old the data is.
 
+## Run it locally
+
+```bash
+pnpm install
+pnpm sync                 # game data into Postgres
+pnpm ingest announcements # official announcements
+pnpm ingest wiki --limit 430
+pnpm eval                 # retrieval scoreboard
+pnpm ask "what is the duality dungeon"
+pnpm dev                  # web UI on http://localhost:3000
+```
+
+Environment lives in `.env.local`; see `.env.example`.
+
 > Status: in development. Design and plan are in `docs/superpowers/`.
 
 ## What it is not
@@ -26,6 +40,17 @@ for god rolls, raid.report and dungeon.report for clears, braytech for progress.
 
 Community data stays with its authors. This repository credits and links to it, and
 never redistributes the source sheets.
+
+## How it answers
+
+Two retrieval paths, merged:
+
+- **Structured data** from Bungie's manifest and AegisRelic's sheets, queried with SQL.
+- **Prose** from official announcements and Destinypedia, retrieved with hybrid search:
+  pgvector cosine similarity plus Postgres full-text, fused with reciprocal rank
+  fusion.
+
+Every answer cites the chunks it used and shows the manifest version it came from.
 
 ## Documents
 
