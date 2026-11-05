@@ -73,9 +73,15 @@ if (import.meta.main || process.argv[1]?.endsWith("ask.ts")) {
 
   console.log("--- retrieved ---");
   for (const [index, hit] of hits.entries()) {
-    const score = hit.similarity.toFixed(3);
+    const score = hit.score.toFixed(3);
     const section = hit.section ? ` / ${hit.section}` : "";
-    console.log(`${index + 1}. ${score}  ${hit.title}${section}  (${hit.sourceName})`);
+    const ranks = [
+      hit.vectorRank ? `vec #${hit.vectorRank}` : "",
+      hit.keywordRank ? `kw #${hit.keywordRank}` : "",
+    ]
+      .filter(Boolean)
+      .join(", ");
+    console.log(`${index + 1}. ${score}  ${hit.title}${section}  (${hit.sourceName}; ${ranks})`);
   }
 
   console.log("\n--- answer ---");

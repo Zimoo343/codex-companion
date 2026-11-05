@@ -22,6 +22,20 @@
       "when": 1793918962851,
       "tag": "0002_keen_blizzard",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793920397762,
+      "tag": "0003_daily_glorian",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793920923876,
+      "tag": "0004_hybrid_search",
+      "breakpoints": true
     }
   ]
 }

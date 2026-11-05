@@ -1,0 +1,1 @@
+ALTER TABLE "guides" ADD COLUMN "era" varchar(10) DEFAULT 'unknown' NOT NULL;

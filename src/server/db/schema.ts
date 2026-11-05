@@ -170,6 +170,7 @@ export const guides = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }),
     contentHash: varchar("content_hash", { length: 64 }).notNull().unique(),
     content: text("content").notNull(),
+    era: varchar("era", { length: 10 }).notNull().default("unknown"),
     embedding: vector("embedding", { dimensions: 1536 }),
   },
   (table) => [

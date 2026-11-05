@@ -16,6 +16,29 @@ export function createOpenAiEmbeddings(
 ): EmbeddingProvider {
   if (!apiKey) throw new Error("OPENAI_API_KEY is not set. Put it in .env.local.");
 
+  // New accounts are limited to ~1M tokens per minute. Backing off on 429 keeps a
+  // full ingestion run from dying halfway through.
+  async function embedWithRetry(batch: string[], attempt = 1): Promise<Response> {
+    const response = await fetch(OPENAI_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, input: batch, dimensions }),
+    });
+
+    if (response.ok) return response;
+
+    const detail = await response.text();
+    if (response.status === 429 && attempt <= 6) {
+      const retryAfter = Number(response.headers.get("retry-after")) * 1000;
+      const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 2000 * attempt;
+      console.warn(`rate limited, waiting ${waitMs}ms`);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      return embedWithRetry(batch, attempt + 1);
+    }
+
+    throw new Error(`embeddings failed: ${response.status} ${detail.slice(0, 300)}`);
+  }
+
   return {
     name: model,
     dimensions,
@@ -24,16 +47,7 @@ export function createOpenAiEmbeddings(
 
       for (let index = 0; index < texts.length; index += BATCH_SIZE) {
         const batch = texts.slice(index, index + BATCH_SIZE);
-        const response = await fetch(OPENAI_URL, {
-          method: "POST",
-          headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-          body: JSON.stringify({ model, input: batch, dimensions }),
-        });
-
-        if (!response.ok) {
-          const detail = await response.text();
-          throw new Error(`embeddings failed: ${response.status} ${detail.slice(0, 300)}`);
-        }
+        const response = await embedWithRetry(batch);
 
         const body = (await response.json()) as {
           data: Array<{ index: number; embedding: number[] }>;

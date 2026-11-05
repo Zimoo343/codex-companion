@@ -59,24 +59,54 @@ export async function selectSeedPages(limit: number): Promise<string[]> {
 
   await pool.end();
 
+  // Order matters: the limit cuts from the end, and endgame pages are what people
+  // ask about most. Gear comes after activities, weapons last.
   const names = new Set<string>(CONCEPT_PAGES);
-  for (const row of [...exoticWeapons, ...exoticArmor, ...endgame]) {
+  for (const row of [...endgame, ...exoticArmor, ...exoticWeapons]) {
     names.add(row.name.trim());
   }
 
   return [...names].filter(Boolean).slice(0, limit);
 }
 
-export async function fetchWikiPage(title: string): Promise<string | null> {
-  const url = `${API}?action=parse&page=${encodeURIComponent(title)}&prop=text&format=json&formatversion=2&redirects=1`;
+// Wiki titles are not always our names: "Duality" is "Duality (dungeon)" there.
+// For a miss, ask the wiki's own search and accept a result that starts with our name.
+async function resolveTitle(title: string): Promise<string | null> {
+  const url = `${API}?action=query&list=search&srsearch=${encodeURIComponent(title)}&srlimit=5&format=json&formatversion=2`;
   const response = await fetch(url, { headers: { "user-agent": USER_AGENT } });
   if (!response.ok) return null;
 
-  const body = (await response.json()) as ParseResponse;
-  if (!body.parse?.text) return null;
-  if (/may refer to:/i.test(body.parse.text.slice(0, 400))) return null;
+  const body = (await response.json()) as { query?: { search?: Array<{ title: string }> } };
+  const candidates = body.query?.search ?? [];
+  const match = candidates.find((candidate) =>
+    candidate.title.toLowerCase().startsWith(title.toLowerCase()),
+  );
+  return match?.title ?? null;
+}
 
-  return body.parse.text;
+export async function fetchWikiPage(
+  title: string,
+): Promise<{ pageTitle: string; html: string } | null> {
+  const parse = async (pageTitle: string) => {
+    const url = `${API}?action=parse&page=${encodeURIComponent(pageTitle)}&prop=text&format=json&formatversion=2&redirects=1`;
+    const response = await fetch(url, { headers: { "user-agent": USER_AGENT } });
+    if (!response.ok) return null;
+    const body = (await response.json()) as ParseResponse;
+    if (!body.parse?.text) return null;
+    if (/may refer to:/i.test(body.parse.text.slice(0, 400))) return null;
+    return body.parse.text;
+  };
+
+  const direct = await parse(title);
+  if (direct) return { pageTitle: title, html: direct };
+
+  const resolved = await resolveTitle(title);
+  if (!resolved) return null;
+
+  // Keep the wiki's own title: "Duality" (an Exotic shotgun) and
+  // "Duality (dungeon)" are different pages and must not be merged.
+  const html = await parse(resolved);
+  return html ? { pageTitle: resolved, html } : null;
 }
 
 export type WikiIngestResult = {
@@ -98,22 +128,27 @@ export async function ingestWiki(
   let missing = 0;
 
   for (const [index, title] of titles.entries()) {
-    const html = await fetchWikiPage(title);
-    if (!html) {
+    const page = await fetchWikiPage(title);
+    if (!page) {
       missing++;
       continue;
     }
     pages++;
 
-    for (const chunk of buildChunks(title, html, options)) {
+    for (const chunk of buildChunks(page.pageTitle, page.html, options)) {
       if (chunk.content.split(/\s+/).length < 25) continue;
       pending.push({
         sourceName: SOURCE_NAME,
-        url: wikiUrl(title),
-        title,
+        url: wikiUrl(page.pageTitle),
+        title: page.pageTitle,
         section: chunk.section,
         licenseNote: LICENSE_NOTE,
-        contentHash: contentHash(SOURCE_NAME, wikiUrl(title), chunk.section, chunk.content),
+        contentHash: contentHash(
+          SOURCE_NAME,
+          wikiUrl(page.pageTitle),
+          chunk.section,
+          chunk.content,
+        ),
         content: chunk.content,
       });
     }

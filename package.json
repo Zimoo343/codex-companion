@@ -19,7 +19,8 @@
     "db:migrate": "drizzle-kit migrate",
     "sync": "node --env-file=.env.local src/server/sync/run.ts",
     "ingest": "node --env-file=.env.local src/server/rag/ingest.ts",
-    "ask": "node --env-file=.env.local src/server/rag/ask.ts"
+    "ask": "node --env-file=.env.local src/server/rag/ask.ts",
+    "eval": "node --env-file=.env.local src/server/rag/eval.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

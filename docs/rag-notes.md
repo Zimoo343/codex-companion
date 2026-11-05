@@ -19,6 +19,26 @@ on the real corpus, not estimates.
 7. **Answer** — the chat model sees the numbered chunks only, must cite `[n]`, and
    must say when the sources do not answer.
 
+## Eval results
+
+Twenty questions in `evals/questions.json`, scored on retrieval only: did the
+expected page appear in the top 8. Answers are graded by hand afterwards.
+
+| run | change | hit@8 |
+|---|---|---|
+| baseline | vector only | 14/20 (70%) |
+| coverage | raids and dungeons seeded before weapons, 322 pages | 18/20 (90%) |
+| hybrid | vector + keyword with reciprocal rank fusion | 19/20 (95%) |
+
+The coverage jump is the important one. Six of the original failures were pages
+that had never been ingested because the seed list was alphabetical and the limit
+cut from the end. Retrieval cannot find what is not there.
+
+Remaining failure: "what exotic helmet does a hunter use for survivability" does not
+retrieve Assassin's Cowl. No keyword overlap; the page never uses "survivability".
+Structured data already knows it is a Hunter helmet with an exotic perk, which is a
+job for the agent in Phase 3, not for the index.
+
 ## Corpus as of 2026-11-05
 
 | source | pages | chunks |
@@ -29,6 +49,25 @@ on the real corpus, not estimates.
 Cost to embed all of it: about **$0.03**, at $0.02 per million tokens.
 
 ## What the runs taught us
+
+**Hybrid beats vector alone on exact names.** "What is the duality dungeon" put the
+generic `Dungeon` page first at 0.496 similarity while the `Duality` page sat just
+outside the top results. Adding a `tsvector` column with a GIN index and fusing both
+rankings with reciprocal rank fusion moved the exact page into the top three.
+
+**RRF is not a boost.** A chunk ranked high in both lists beats a chunk ranked first
+in one list and absent from the other. That is why "Heartshadow" outranks "Duality"
+for the dungeon query: it appears in both rankings. It is acceptable here, and a
+title-match boost is the next thing to test if it stops being acceptable.
+
+**Wiki titles collide.** "Duality" is an Exotic shotgun and "Duality (dungeon)" is a
+raid activity. Storing the seed name as the title merged both pages into one and the
+model answered about the shotgun. The importer now keeps the resolved wiki title.
+
+**New OpenAI accounts are rate limited at 1M tokens per minute.** A full re-ingest
+died at 2000 chunks with a 429. The embedder now honours `retry-after` and backs off,
+which is what a production ingest job needs anyway.
+
 
 **Seed coverage beats algorithm tuning.** The first wiki crawl seeded pages from our
 own gear and activity data. Asking "how do champions work" returned exotic armor at
