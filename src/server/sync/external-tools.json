@@ -1,0 +1,72 @@
+[
+  {
+    "name": "destiny.report",
+    "url": "https://destiny.report/",
+    "answers": "god rolls, weapon versions, craftable and upgradable status, weapon sources",
+    "recommendWhen": "the question is about the best roll for a specific weapon, whether a version is craftable or upgradable, or where a weapon comes from in detail",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "light.gg",
+    "url": "https://www.light.gg/",
+    "answers": "item popularity, perk pools, weekly rotation, vendor stock",
+    "recommendWhen": "the question is about what is popular, what a perk pool contains, or what is available this week from vendors",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "DIM",
+    "url": "https://destinyitemmanager.com/",
+    "answers": "vault contents, loadouts, gear transfers",
+    "recommendWhen": "the question involves the player's own items, moving gear, or saving a loadout",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "d2armorpicker",
+    "url": "https://d2armorpicker.com/",
+    "answers": "armor stat splits built from the player's own armor",
+    "recommendWhen": "the question is which armor pieces to combine for a stat target such as triple 100s",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "braytech",
+    "url": "https://braytech.org/",
+    "answers": "progress, collections, vendors, season status",
+    "recommendWhen": "the question is about the player's own progress or what is left to collect",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "Destiny Tracker",
+    "url": "https://destinytracker.com/",
+    "answers": "career stats, PvP and PvE breakdowns",
+    "recommendWhen": "the question is about the player's own performance or match history",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "raid.report",
+    "url": "https://raid.report/",
+    "answers": "raid clears, raid stats, leaderboards",
+    "recommendWhen": "the question is about the player's own raid completions or raid leaderboards",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "dungeon.report",
+    "url": "https://dungeon.report/",
+    "answers": "dungeon clears, dungeon stats, leaderboards",
+    "recommendWhen": "the question is about the player's own dungeon completions or dungeon leaderboards",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "trials.report",
+    "url": "https://trials.report/",
+    "answers": "Trials of Osiris performance and history",
+    "recommendWhen": "the question is about the player's own Trials record",
+    "lastReviewed": "2026-11-04"
+  },
+  {
+    "name": "raidhub",
+    "url": "https://raidhub.io/",
+    "answers": "finding a fireteam, raid and dungeon run history",
+    "recommendWhen": "the player asks how to find people to run a raid or dungeon",
+    "lastReviewed": "2026-11-04"
+  }
+]

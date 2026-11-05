@@ -1,0 +1,2 @@
+ALTER TABLE "aegis_archetypes" DROP CONSTRAINT "aegis_archetypes_weapon_frame";--> statement-breakpoint
+CREATE INDEX "aegis_archetypes_weapon_frame_idx" ON "aegis_archetypes" USING btree ("weapon","frame");
