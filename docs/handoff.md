@@ -46,8 +46,13 @@ Phase 0 done and committed (`2d1a387`, plus `d9629dc`). Nothing else built yet.
 - **v1 includes vector search**: official announcements via the Steam news API, plus
   Destinypedia under CC-BY-SA.
 - **Model access** through OpenCode Console service-account key, OpenAI-compatible
-  endpoint, `LLM_MODEL` plus `LLM_FALLBACK_MODEL`. No embedding model there, so
-  embeddings will use OpenAI `text-embedding-3-small` with a separate key.
+  endpoint, `LLM_MODEL` plus `LLM_FALLBACK_MODEL`. No embedding model there.
+- **Embeddings: OpenAI `text-embedding-3-small`, chosen deliberately.** Local
+  embeddings through `transformers.js` were considered — free, no account, good for
+  learning — and rejected for this project because the target is a Vercel-hosted app
+  where a 130MB model per cold start is the wrong shape. Cost is a few cents for the
+  whole corpus plus roughly nothing per query. The provider still sits behind our own
+  module, so a local provider can be added later without touching callers.
 
 ## Spike findings that must survive the port
 
@@ -114,4 +119,11 @@ pgvector storage and cosine retrieval; a CLI that shows retrieved chunks with sc
 plus the answer, and `docs/rag-notes.md` recording chunk size, overlap and top-k
 experiments.
 
-Needs: an OpenAI API key for embeddings in `.env.local` as `OPENAI_API_KEY`.
+Prerequisite: an OpenAI API key in `.env.local` as `OPENAI_API_KEY`.
+
+Create it at `platform.openai.com` → Billing (add $5) → API keys → name it
+`codex-companion`, then set a project monthly limit of $5. Corpus embedding costs
+roughly 2–4 cents once; re-embedding only happens for changed text.
+
+Note: embeddings from different models are not interchangeable. If the provider ever
+changes, the whole corpus must be re-embedded and the vector column rebuilt.
