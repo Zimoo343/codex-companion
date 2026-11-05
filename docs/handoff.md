@@ -14,6 +14,8 @@ Repository: local folder `D:\VsCode\ai-rag`, repo name on GitHub will be
 
 ## Status
 
+Phase 1 done. Data lives in Neon Postgres and syncs with `pnpm sync`.
+
 Phase 0 done and committed (`2d1a387`, plus `d9629dc`). Nothing else built yet.
 
 - Design: `docs/superpowers/specs/2026-11-04-codex-companion-design.md` — approved.
@@ -80,8 +82,13 @@ These each cost a debug cycle. Do not rediscover them.
 
 ## Spike numbers to reproduce in Phase 1
 
-1393 weapons, 141 exotic armor, 331 subclass plugs, 214 activities, 748 per-weapon
-recommendation rows, 94 archetype rows. Manifest version seen: `245114.26.10.13.2000-1-bnet.66137`.
+141 exotic armor, 331 subclass plugs, 214 activities, 748 per-weapon recommendation
+rows, 94 archetype rows, 10 external tools. Manifest version seen:
+`245114.26.10.13.2000-1-bnet.66137`.
+
+Weapons land at **1318**, not the spike's 1393. Difference is intentional: the spike
+kept every reissue that tied on plug count, Phase 1 keeps exactly one row per name,
+picking the widest plug list. Deterministic beats faithful to a tie.
 
 ## Prerequisites for Phase 1
 
@@ -90,9 +97,21 @@ recommendation rows, 94 archetype rows. Manifest version seen: `245114.26.10.13.
 3. Decide **public or private** for the GitHub repo; `gh` is authenticated as
    `Zimoo343`, so pushing is one command.
 
+## What exists now
+
+- `pnpm sync` — manifest, sheets and reference data into Postgres, with a version gate
+- `pnpm sync manifest|sheets|reference` — run one part
+- `pnpm test` — 17 unit tests, Node's own runner, no build step
+- `pnpm typecheck`, `pnpm lint`, `pnpm fmt`
+- `drizzle/` — migrations, pgvector already enabled
+
 ## Next step
 
-Phase 1 — data layer: Drizzle schema and migrations, spike importers ported to
-TypeScript with colocated unit tests (CSV parser, column slugging, activity name
-normalisation, weapon dedupe), `pnpm sync` writing to Postgres, `sync_runs` recording
-manifest version so unchanged versions skip, `external_tools` seeded from JSON.
+Phase 2 — RAG in the terminal: ingest official announcements (Steam news API,
+`steam_community_announcements` only) and Destinypedia (`CC-BY-SA`, attribution per
+chunk); heading-aware chunking; embeddings with OpenAI `text-embedding-3-small`;
+pgvector storage and cosine retrieval; a CLI that shows retrieved chunks with scores
+plus the answer, and `docs/rag-notes.md` recording chunk size, overlap and top-k
+experiments.
+
+Needs: an OpenAI API key for embeddings in `.env.local` as `OPENAI_API_KEY`.
