@@ -6,7 +6,7 @@ of the data decisions, not as production code.
 ## Start a session
 
 ```powershell
-cd D:\VsCode\ai-rag\spikes\manifest-probe
+cd spikes\manifest-probe
 .\ask.cmd
 ```
 
@@ -16,14 +16,14 @@ toggles exact numbers (prompt becomes `d2 [numbers]>`), `exit` quits.
 ## One-shot question
 
 ```powershell
-cd D:\VsCode\ai-rag\spikes\manifest-probe
+cd spikes\manifest-probe
 .\ask.cmd "what is the best DPS power weapon right now"
 ```
 
 ## Refresh the data
 
 ```powershell
-cd D:\VsCode\ai-rag\spikes\manifest-probe
+cd spikes\manifest-probe
 node sync.mjs
 ```
 
