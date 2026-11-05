@@ -14,7 +14,12 @@ Repository: local folder `D:\VsCode\ai-rag`, repo name on GitHub will be
 
 ## Status
 
-Phase 1 done. Data lives in Neon Postgres and syncs with `pnpm sync`.
+Phase 2 in progress. Vector search works end to end in the terminal over 5344
+chunks (235 Destinypedia pages, 73 official announcements). Structured data lives in
+the same database and syncs with `pnpm sync`.
+
+OpenAI key expires **2027-02-03** (90 days from 2026-11-05). When it does, ingestion
+and every retrieval will fail with a 401 that looks like a bug.
 
 Phase 0 done and committed (`2d1a387`, plus `d9629dc`). Nothing else built yet.
 
@@ -104,6 +109,10 @@ picking the widest plug list. Deterministic beats faithful to a tie.
 
 ## What exists now
 
+- `pnpm ask "question"` — retrieve chunks, print similarities, answer with citations
+- `pnpm ingest announcements` — official Steam posts (BBCode)
+- `pnpm ingest wiki --limit 220` — Destinypedia pages seeded from concepts plus our own gear and activity data
+- `docs/rag-notes.md` — parameters, what the runs taught us, next experiments
 - `pnpm sync` — manifest, sheets and reference data into Postgres, with a version gate
 - `pnpm sync manifest|sheets|reference` — run one part
 - `pnpm test` — 17 unit tests, Node's own runner, no build step
@@ -112,12 +121,11 @@ picking the widest plug list. Deterministic beats faithful to a tie.
 
 ## Next step
 
-Phase 2 — RAG in the terminal: ingest official announcements (Steam news API,
-`steam_community_announcements` only) and Destinypedia (`CC-BY-SA`, attribution per
-chunk); heading-aware chunking; embeddings with OpenAI `text-embedding-3-small`;
-pgvector storage and cosine retrieval; a CLI that shows retrieved chunks with scores
-plus the answer, and `docs/rag-notes.md` recording chunk size, overlap and top-k
-experiments.
+Finish Phase 2 by running the experiments listed at the end of `docs/rag-notes.md`,
+in order: recency boost, hybrid search for perk names, per-source chunk sizes, query
+rewriting, reranking. Each one needs eval questions first.
+
+Then Phase 3 — the eve agent with `query_game_data` and `search_guides` as tools.
 
 Prerequisite: an OpenAI API key in `.env.local` as `OPENAI_API_KEY`.
 
