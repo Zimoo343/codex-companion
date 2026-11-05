@@ -17,7 +17,9 @@
     "test": "node --test \"src/**/*.test.ts\"",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "sync": "node --env-file=.env.local src/server/sync/run.ts"
+    "sync": "node --env-file=.env.local src/server/sync/run.ts",
+    "ingest": "node --env-file=.env.local src/server/rag/ingest.ts",
+    "ask": "node --env-file=.env.local src/server/rag/ask.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

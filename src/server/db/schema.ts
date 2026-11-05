@@ -10,6 +10,7 @@ import {
   timestamp,
   unique,
   varchar,
+  vector,
 } from "drizzle-orm/pg-core";
 
 export const sources = pgTable("sources", {
@@ -156,6 +157,26 @@ export const externalTools = pgTable("external_tools", {
   recommendWhen: text("recommend_when").notNull(),
   lastReviewed: varchar("last_reviewed", { length: 10 }).notNull().default(""),
 });
+
+export const guides = pgTable(
+  "guides",
+  {
+    id: serial("id").primaryKey(),
+    sourceName: varchar("source_name", { length: 120 }).notNull(),
+    url: text("url").notNull(),
+    title: text("title").notNull(),
+    section: text("section").notNull().default(""),
+    licenseNote: text("license_note").notNull().default(""),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    contentHash: varchar("content_hash", { length: 64 }).notNull().unique(),
+    content: text("content").notNull(),
+    embedding: vector("embedding", { dimensions: 1536 }),
+  },
+  (table) => [
+    index("guides_source_idx").on(table.sourceName),
+    index("guides_published_idx").on(table.publishedAt),
+  ],
+);
 
 export const corrections = pgTable("corrections", {
   id: serial("id").primaryKey(),
