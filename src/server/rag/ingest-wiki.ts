@@ -1,4 +1,4 @@
-import { inArray, or, eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { createDatabase } from "../db/client.ts";
 import * as schema from "../db/schema.ts";
 import { buildChunks, type ChunkOptions } from "./chunk.ts";
@@ -44,25 +44,9 @@ const CONCEPT_PAGES = [
 // Seed pages come from the data we already trust: exotic gear and endgame
 // activities. Those are the pages players ask about, and it keeps the crawl
 // bounded instead of mirroring the wiki.
-export async function selectSeedPages(limit: number): Promise<string[]> {
-  const { db, pool } = createDatabase();
-
-  const exoticWeapons = await db
-    .select({ name: schema.weapons.name })
-    .from(schema.weapons)
-    .where(eq(schema.weapons.tier, "Exotic"));
-  const exoticArmor = await db.select({ name: schema.armor.name }).from(schema.armor);
-  const endgame = await db
-    .select({ name: schema.activities.name })
-    .from(schema.activities)
-    .where(or(eq(schema.activities.type, "Raid"), eq(schema.activities.type, "Dungeon")));
-
-  await pool.end();
-
+export function selectSeedPages(limit: number): string[] {
   // Mechanics pages only: gear and activity answers come from the structured tables.
-  const names = new Set<string>(CONCEPT_PAGES);
-
-  return [...names].filter(Boolean).slice(0, limit);
+  return CONCEPT_PAGES.slice(0, limit);
 }
 
 // Wiki titles are not always our names: "Duality" is "Duality (dungeon)" there.
@@ -117,7 +101,7 @@ export async function ingestWiki(
   options: ChunkOptions & { limit?: number; dryRun?: boolean } = {},
 ): Promise<WikiIngestResult> {
   const { db, pool } = createDatabase();
-  const titles = await selectSeedPages(options.limit ?? 300);
+  const titles = selectSeedPages(options.limit ?? 300);
 
   const pending: Array<typeof schema.guides.$inferInsert> = [];
   let pages = 0;
