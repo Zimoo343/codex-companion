@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 
@@ -9,6 +9,14 @@ const display = Inter_Tight({
 });
 
 const body = Inter({ subsets: ["latin"], variable: "--font-body" });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#0b0d13",
+};
 
 export const metadata: Metadata = {
   title: "Codex Companion",

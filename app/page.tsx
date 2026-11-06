@@ -90,7 +90,7 @@ export default function Home() {
 
   // The chat list is a drawer on phones, so it must not cover the chat on load.
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 820px)");
+    const query = window.matchMedia("(max-width: 1024px)");
     const apply = () => {
       setIsNarrow(query.matches);
       setSidebarOpen(!query.matches);
@@ -239,13 +239,14 @@ export default function Home() {
 
         <main className="chat">
           <header className="chat-head">
-            {!sidebarOpen && (
+            {(!sidebarOpen || isNarrow) && (
               <button
-                className="icon-button"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Show chats"
+                className="icon-button nav-toggle"
+                onClick={() => setSidebarOpen((open) => !open)}
+                aria-label={sidebarOpen ? "Hide chats" : "Show chats"}
               >
-                ☰
+                <span aria-hidden="true">☰</span>
+                {isNarrow && <span className="nav-toggle-label">Chats</span>}
               </button>
             )}
             <div>
