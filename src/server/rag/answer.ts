@@ -120,7 +120,13 @@ async function currentDataVersion(): Promise<string> {
   }
 }
 
-export async function answerQuestion(question: string, limit = 5): Promise<Answer> {
+export type PreparedAnswer = {
+  sources: AnswerSource[];
+  dataVersion: string;
+  messages: Array<{ role: string; content: string }>;
+};
+
+export async function prepareAnswer(question: string, limit = 5): Promise<PreparedAnswer> {
   const vector = await embedQuestion(question);
 
   const [allHits, entities, structured] = await Promise.all([
@@ -159,12 +165,12 @@ export async function answerQuestion(question: string, limit = 5): Promise<Answe
       ? relevant.filter((entity) => entity.score >= bestEntity - 0.04).slice(0, 5)
       : [];
 
-  const entityText = entities
+  const entityText = keptEntities
     .map((entity) => `[${entity.kind}] ${entity.name}: ${entity.text}`)
     .join("\n");
 
   const parts = [
-    structured ? `GAME DATA\n\n${structured}` : "",
+    structured.text ? `GAME DATA\n\n${structured.text}` : "",
     entityText
       ? `ENTITY DATA (semantic matches across weapons, armor, activities, perks and sheet rows)\n\n${entityText}`
       : "",
@@ -172,14 +178,12 @@ export async function answerQuestion(question: string, limit = 5): Promise<Answe
     `Question: ${question}`,
   ].filter(Boolean);
 
-  const answer = await chat([
-    { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: parts.join("\n\n") },
-  ]);
-
   return {
-    answer,
     dataVersion: await currentDataVersion(),
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: parts.join("\n\n") },
+    ],
     sources: [
       ...hits.map((hit, index) => ({
         index: index + 1,
@@ -197,6 +201,21 @@ export async function answerQuestion(question: string, limit = 5): Promise<Answe
         sourceName: entitySource(entity.kind, entity.meta),
         score: entity.score,
       })),
+      ...structured.origins.map((origin, index) => ({
+        index: hits.length + keptEntities.length + index + 1,
+        title: origin.title,
+        section: "data table",
+        url: origin.url,
+        sourceName: origin.sourceName,
+        score: 0,
+      })),
     ],
   };
 }
+
+export async function answerQuestion(question: string, limit = 5): Promise<Answer> {
+  const prepared = await prepareAnswer(question, limit);
+  const answer = await chat(prepared.messages);
+  return { answer, sources: prepared.sources, dataVersion: prepared.dataVersion };
+}
+

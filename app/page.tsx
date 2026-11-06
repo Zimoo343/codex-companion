@@ -106,24 +106,27 @@ export default function Home() {
     const assistantId = messageId();
     appendMessage(session.id, { id: assistantId, role: "assistant", text: "" });
 
+    let streamed = "";
+    let streamSources: ChatMessage["sources"];
+    let streamVersion: string | undefined;
+
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
         headers: { "content-type": "application/json", "x-access-code": inviteCode },
         body: JSON.stringify({ question: text }),
       });
-      const body = (await response.json()) as AskResponse;
 
-      if (response.status === 401) {
-        setGateOpen(true);
-        replaceMessage(session.id, assistantId, {
-          text: "Access expired. Enter the invite code to continue.",
-          error: true,
-        });
-        return;
-      }
-
-      if (!response.ok) {
+      if (response.status !== 200 || !response.body) {
+        const body = (await response.json().catch(() => ({}))) as AskResponse;
+        if (response.status === 401) {
+          setGateOpen(true);
+          replaceMessage(session.id, assistantId, {
+            text: "Access expired. Enter the invite code to continue.",
+            error: true,
+          });
+          return;
+        }
         replaceMessage(session.id, assistantId, {
           text: body.error ?? "Something went wrong.",
           error: true,
@@ -131,12 +134,24 @@ export default function Home() {
         return;
       }
 
-      saveInviteCode(inviteCode);
-      replaceMessage(session.id, assistantId, {
-        text: body.answer,
-        sources: body.sources,
-        dataVersion: body.dataVersion,
+      await readStream(response.body, (event) => {
+        if (event.type === "meta") {
+          streamSources = event.sources;
+          streamVersion = event.dataVersion;
+          return;
+        }
+        if (event.type === "delta" && typeof event.text === "string") {
+          streamed += event.text;
+          replaceMessage(session.id, assistantId, {
+            text: streamed,
+            sources: streamSources,
+            dataVersion: streamVersion,
+          });
+        }
       });
+
+      saveInviteCode(inviteCode);
+      return;
     } catch {
       replaceMessage(session.id, assistantId, {
         text: "Could not reach the companion.",
@@ -235,15 +250,6 @@ export default function Home() {
               <Message key={message.id} message={message} />
             ))}
 
-            {pending && (
-              <div className="message message-assistant">
-                <div className="bubble bubble-assistant typing">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              </div>
-            )}
             <div ref={bottomRef} />
           </div>
 
@@ -289,4 +295,39 @@ export default function Home() {
       </div>
     </>
   );
+}
+
+type StreamEvent = {
+  type: "meta" | "delta" | "done";
+  text?: string;
+  sources?: ChatMessage["sources"];
+  dataVersion?: string;
+};
+
+// The API speaks newline-delimited JSON so text can render as it is generated.
+async function readStream(
+  body: ReadableStream<Uint8Array>,
+  onEvent: (event: StreamEvent) => void,
+): Promise<void> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const rawLine of lines) {
+      if (!rawLine.trim()) continue;
+      try {
+        onEvent(JSON.parse(rawLine) as StreamEvent);
+      } catch {
+        // Ignore partial frames.
+      }
+    }
+  }
 }

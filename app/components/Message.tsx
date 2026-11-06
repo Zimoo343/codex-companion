@@ -23,6 +23,18 @@ function Sources({ message }: { message: ChatMessage }) {
 }
 
 export function Message({ message }: { message: ChatMessage }) {
+  if (message.role === "assistant" && message.text.trim() === "" && !message.error) {
+    return (
+      <div className="message message-assistant">
+        <div className="bubble bubble-assistant skeleton" aria-label="Thinking">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    );
+  }
+
   if (message.role === "user") {
     return (
       <div className="message message-user">

@@ -3,6 +3,18 @@ import { createDatabase } from "../db/client.ts";
 
 type Row = Record<string, unknown>;
 
+export type Origin = { title: string; sourceName: string; url: string };
+
+const AEGIS_URL = "https://docs.google.com/spreadsheets/d/1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY";
+const BOSS_URL = "https://docs.google.com/spreadsheets/d/1_5wtBjRYHHxuF4oJKDb_iOGZs-wTkzB6RYbnyNLbuz4";
+const DDC_URL = "https://docs.google.com/spreadsheets/d/1WaxvbLx7UoSZaBqdFr1u32F2uWVLo-CJunJB4nlGUE4";
+
+export function sheetUrl(source: string): string {
+  if (source === "AegisRelic Boss Damage") return BOSS_URL;
+  if (source === "Destiny Data Compendium") return DDC_URL;
+  return AEGIS_URL;
+}
+
 function describe(rows: Row[]): string {
   if (rows.length === 0) return "no rows";
   return rows
@@ -20,8 +32,8 @@ async function queryFamilies(
   families: string[],
   wantsDamage: boolean,
   heavyOnly: boolean,
-): Promise<string> {
-  if (families.length === 0 && !wantsDamage) return "";
+): Promise<{ text: string; origins: Origin[] }> {
+  if (families.length === 0 && !wantsDamage) return { text: "", origins: [] };
 
   const { pool } = createDatabase();
   try {
@@ -71,14 +83,24 @@ async function queryFamilies(
       sections.push(`Frame analysis notes:\n${describe(notes.rows)}`);
     }
 
-    return sections.join("\n\n");
+    const origins: Origin[] = sections.length
+      ? [{ title: "Endgame Analysis", sourceName: "AegisRelic", url: AEGIS_URL }]
+      : [];
+
+    return { text: sections.join("\n\n"), origins };
   } finally {
     await pool.end();
   }
 }
 
-async function queryEntities(intent: QuestionIntent): Promise<string> {
+async function queryEntities(intent: QuestionIntent): Promise<{ text: string; origins: Origin[] }> {
   const { pool } = createDatabase();
+  const origins: Origin[] = [];
+  const remember = (title: string) => {
+    if (!origins.some((origin) => origin.title === title)) {
+      origins.push({ title, sourceName: "Bungie manifest", url: "https://www.bungie.net" });
+    }
+  };
   try {
     const sections: string[] = [];
     const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
@@ -157,16 +179,17 @@ async function queryEntities(intent: QuestionIntent): Promise<string> {
       );
       if (plugs.rows.length > 0) {
         sections.push(`Matching aspects, fragments and artifact perks:\n${describe(plugs.rows)}`);
+        remember("Aspects and fragments");
       }
     }
 
-    return sections.join("\n\n");
+    return { text: sections.join("\n\n"), origins };
   } finally {
     await pool.end();
   }
 }
 
-async function querySheets(intent: QuestionIntent): Promise<string> {
+async function querySheets(intent: QuestionIntent): Promise<{ text: string; origins: Origin[] }> {
   const { pool } = createDatabase();
   try {
     const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
@@ -180,19 +203,31 @@ async function querySheets(intent: QuestionIntent): Promise<string> {
         limit 6`,
       [patterns],
     );
-    if (result.rows.length === 0) return "";
+    if (result.rows.length === 0) return { text: "", origins: [] };
 
     const lines = result.rows.map((entry) => {
       const where = [entry.source, entry.tab, entry.section].filter(Boolean).join(" / ");
       return `[${where}] ${entry.data}`;
     });
-    return `Community sheet rows:\n${lines.join("\n")}`;
+
+    const origins: Origin[] = [];
+    for (const entry of result.rows) {
+      const source = String(entry.source);
+      const key = `${source} · ${entry.tab}`;
+      if (!origins.some((origin) => origin.title === key)) {
+        origins.push({ title: key, sourceName: source, url: sheetUrl(source) });
+      }
+    }
+
+    return { text: `Community sheet rows:\n${lines.join("\n")}`, origins };
   } finally {
     await pool.end();
   }
 }
 
-export async function buildStructuredContext(question: string): Promise<string> {
+export async function buildStructuredContext(
+  question: string,
+): Promise<{ text: string; origins: Origin[] }> {
   const intent = detectIntent(question);
   const heavyOnly = /\b(heavy|power|boss)\b/i.test(question);
   const parts = await Promise.all([
@@ -200,5 +235,16 @@ export async function buildStructuredContext(question: string): Promise<string> 
     queryEntities(intent),
     querySheets(intent),
   ]);
-  return parts.filter(Boolean).join("\n\n");
+
+  const origins: Origin[] = [];
+  for (const part of parts) {
+    for (const origin of part.origins) {
+      const duplicate = origins.some(
+        (existing) => existing.title === origin.title && existing.sourceName === origin.sourceName,
+      );
+      if (!duplicate) origins.push(origin);
+    }
+  }
+
+  return { text: parts.map((part) => part.text).filter(Boolean).join("\n\n"), origins };
 }
