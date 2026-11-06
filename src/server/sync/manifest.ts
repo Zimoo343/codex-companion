@@ -115,6 +115,15 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
       perkDescriptions.set(perk.hash, stripHtml(perk.displayProperties.description));
   }
 
+  const weaponPerkDescriptions = new Map<number, string>();
+  for (const perk of readAll<{ hash: number; displayProperties?: { description?: string } }>(
+    manifestDb,
+    "DestinySandboxPerkDefinition",
+  )) {
+    const description = stripHtml(perk.displayProperties?.description);
+    if (description) weaponPerkDescriptions.set(perk.hash, description);
+  }
+
   const weapons: WeaponRow[] = [];
   for (const item of items) {
     if (item.itemType !== 3) continue;
@@ -161,7 +170,13 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
       if (statName) stats[statName] = stat.value;
     }
 
+    // The exotic effect lives on the sandbox perk; socket entries also carry mods
+    // and masterwork text, which is noise for answering "what does this do".
     const perks: string[] = [];
+    for (const perk of item.perks ?? []) {
+      const description = weaponPerkDescriptions.get(perk.perkHash);
+      if (description) perks.push(description);
+    }
     for (const socket of item.sockets?.socketEntries ?? []) {
       const description = stripHtml(
         itemsByHash.get(socket.singleInitialItemHash)?.displayProperties?.description,
@@ -169,14 +184,21 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
       if (description) perks.push(description);
     }
 
+    const effectText = perks.filter(
+      (perk) =>
+        !/^(no mod|restores your (gear|armor)|upgrade this armor|fully upgrading|increased (resilience|mobility|recovery|intellect|discipline|strength))/i.test(
+          perk,
+        ),
+    );
+
     armor.push({
       name,
       slot: item.itemTypeDisplayName ?? "",
       class: CLASS_NAMES[item.classType ?? -1] ?? "",
       tier: item.inventory?.tierTypeName ?? "",
       stats,
-      perks: perks.slice(0, 6),
-      description: stripHtml(item.displayProperties?.description),
+      perks: effectText.slice(0, 3),
+      description: stripHtml(item.displayProperties?.description) || effectText[0] || "",
     });
   }
 

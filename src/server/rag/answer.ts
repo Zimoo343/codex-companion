@@ -1,3 +1,4 @@
+import { buildStructuredContext } from "./context.ts";
 import { searchGuides, type GuideHit } from "./search.ts";
 import { createDatabase } from "../db/client.ts";
 
@@ -9,14 +10,28 @@ const apiKey = process.env.LLM_API_KEY;
 const model = process.env.LLM_MODEL;
 const fallbackModel = process.env.LLM_FALLBACK_MODEL;
 
-const SYSTEM_PROMPT = `You answer Destiny 2 questions using only the numbered sources given.
+const SYSTEM_PROMPT = `You are a Destiny 2 expert answering questions for new and returning players.
+
+You get two kinds of evidence:
+- GAME DATA: rows from Bungie's manifest and AegisRelic's community spreadsheets. Exact stats, tiers, perks and damage numbers.
+- WIKI SOURCES: numbered excerpts. Cite these as [1], [2].
 
 Rules:
-- Cite sources as [1], [2] next to the claim they support.
-- If the sources do not answer the question, say so. Do not fill gaps from memory.
-- Plain language first, for a new or returning player. Short.
-- Mention the update or date when the source is a patch note or announcement.
-- If a source is about the original Destiny, say that instead of presenting it as Destiny 2.`;
+- GAME DATA is authoritative. When it contains a tier or a number, use it. Never say you lack numbers while GAME DATA has them.
+- Wiki sources add context, history and mechanics. They are not a tier list; never let a wiki page overrule a GAME DATA tier.
+- If GAME DATA lists an S tier weapon for the family asked about, name it as the recommendation.
+- Plain language first: which weapon, why, where it drops. Numbers second.
+- Damage questions are ambiguous. If the question does not say burst or sustained, say which you are using and cover both. Burst uses one_mag_bdps, sustained uses typical_bdps and max_bdps.
+- max_bdps assumes perfect swaps and ability combos; typical_bdps is the realistic number. Say which you quote.
+- Tier letters are S, A, B, C, D, E, F. A tier is a recommendation grade, not a damage number, so never answer a damage question with tiers alone.
+- Sword rows repeat the same value across damage columns because they assume constant heavy ammo and melee range. If swords appear at the top of a damage ranking, state that caveat in the same sentence as the number.
+- The damage tables carry a rank column: rank 1 is best for that metric. Quote the rank 1 row for each metric. Never call two different values a tie.
+- Check analysis_notes before crowning a winner; a row can win on paper and be impractical.
+- If two answers are close or the winner depends on the fight, say it depends and give both conditions.
+- Never invent a number. If neither data nor sources answer, say so.
+- Never list weapons, armor or perks that do not appear in GAME DATA or the wiki sources, even as "usual picks". If the evidence is missing, say it is missing and stop.
+- If a source is about the original Destiny, say that instead of presenting it as Destiny 2.
+- Mention the update or date when a source is a patch note or announcement.`;
 
 export type AnswerSource = {
   index: number;
@@ -79,11 +94,21 @@ async function currentDataVersion(): Promise<string> {
   }
 }
 
-export async function answerQuestion(question: string, limit = 8): Promise<Answer> {
-  const hits = await searchGuides(question, limit);
+export async function answerQuestion(question: string, limit = 5): Promise<Answer> {
+  const [hits, structured] = await Promise.all([
+    searchGuides(question, limit),
+    buildStructuredContext(question),
+  ]);
+
+  const parts = [
+    structured ? `GAME DATA\n\n${structured}` : "",
+    `WIKI SOURCES\n\n${formatSources(hits)}`,
+    `Question: ${question}`,
+  ].filter(Boolean);
+
   const answer = await chat([
     { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: `Sources:\n\n${formatSources(hits)}\n\nQuestion: ${question}` },
+    { role: "user", content: parts.join("\n\n") },
   ]);
 
   return {

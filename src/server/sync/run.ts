@@ -40,7 +40,7 @@ async function syncManifest() {
   const { version, zip } = await fetchManifest();
   const known = await latestVersion(db, "manifest");
 
-  if (known === version) {
+  if (known === version && !process.env.FORCE) {
     console.log(`manifest ${version} already imported, skipping`);
     await pool.end();
     return;
