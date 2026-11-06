@@ -46,6 +46,7 @@ export default function Home() {
   const [gateError, setGateError] = useState("");
   const [gateChecking, setGateChecking] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isNarrow, setIsNarrow] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -86,6 +87,18 @@ export default function Home() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [active?.messages.length, pending]);
+
+  // The chat list is a drawer on phones, so it must not cover the chat on load.
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 820px)");
+    const apply = () => {
+      setIsNarrow(query.matches);
+      setSidebarOpen(!query.matches);
+    };
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
 
   function startNewChat() {
     createSession();
@@ -200,10 +213,18 @@ export default function Home() {
       )}
 
       <div className={`shell${sidebarOpen ? " shell-with-sidebar" : ""}`}>
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
         <Sidebar
           sessions={sessions}
           activeId={activeId}
-          onSelect={setActiveId}
+          onSelect={(id) => {
+            setActiveId(id);
+            if (isNarrow) setSidebarOpen(false);
+          }}
           onNew={startNewChat}
           onDelete={deleteSession}
           open={sidebarOpen}
@@ -275,8 +296,20 @@ export default function Home() {
                   }
                 }}
               />
-              <button className="send" type="submit" disabled={pending || !input.trim()}>
-                {pending ? "…" : "Send"}
+              <button
+                className="send"
+                type="submit"
+                disabled={pending || !input.trim()}
+                aria-label="Send question"
+                title="Send"
+              >
+                {pending ? (
+                  <span className="send-pending" />
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 19V5M12 5l-6 6M12 5l6 6" />
+                  </svg>
+                )}
               </button>
             </div>
             <div className="composer-foot">
