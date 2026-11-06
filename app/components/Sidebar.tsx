@@ -10,6 +10,7 @@ type SidebarProps = {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, title: string) => void;
   open: boolean;
   onToggle: () => void;
 };
@@ -22,12 +23,15 @@ export function Sidebar({
   onSelect,
   onNew,
   onDelete,
+  onRename,
   open,
   onToggle,
 }: SidebarProps) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [hold, setHold] = useState<{ id: string; progress: number } | null>(null);
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftTitle, setDraftTitle] = useState("");
 
   const frame = useRef<number | null>(null);
   const lastTick = useRef<number>(0);
@@ -121,8 +125,44 @@ export function Sidebar({
                 </div>
               ) : (
                 <>
-                  <button className="chat-select" onClick={() => onSelect(session.id)}>
-                    {session.title || "New chat"}
+                  {editingId === session.id ? (
+                    <input
+                      className="chat-rename"
+                      autoFocus
+                      value={draftTitle}
+                      maxLength={60}
+                      onChange={(event) => setDraftTitle(event.target.value)}
+                      onBlur={() => {
+                        onRename(session.id, draftTitle);
+                        setEditingId(null);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          onRename(session.id, draftTitle);
+                          setEditingId(null);
+                        }
+                        if (event.key === "Escape") setEditingId(null);
+                      }}
+                    />
+                  ) : (
+                    <button className="chat-select" onClick={() => onSelect(session.id)}>
+                      {session.title || "New chat"}
+                    </button>
+                  )}
+
+                  <button
+                    className="chat-edit"
+                    title="Rename chat"
+                    aria-label="Rename chat"
+                    onClick={() => {
+                      setEditingId(session.id);
+                      setDraftTitle(session.title || "");
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M4 20h4l10-10-4-4L4 16v4Z" />
+                      <path d="M13.5 5.5 18 10" />
+                    </svg>
                   </button>
                   <button
                     className="chat-delete"
@@ -143,7 +183,17 @@ export function Sidebar({
                     }}
                     onKeyUp={stopHold}
                   >
-                    🗑
+                    <svg
+                      className="trash-icon"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M4.5 7h15" />
+                      <path d="M9.5 7V4.8h5V7" />
+                      <path d="M6.8 7l0.9 12.2h8.6L17.2 7" />
+                      <path d="M10.4 10.6v5.4M13.6 10.6v5.4" />
+                    </svg>
                   </button>
                 </>
               )}

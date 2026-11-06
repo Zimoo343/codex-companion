@@ -1,14 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../chat-store";
 
-function Sources({ message }: { message: ChatMessage }) {
+function Sources({ message, id }: { message: ChatMessage; id: string }) {
   if (!message.sources || message.sources.length === 0) return null;
 
   return (
-    <ul className="sources">
+    <ul className="sources" id={id}>
       {message.sources.map((source) => (
         <li key={`${message.id}-${source.index}-${source.url}`}>
           <a href={source.url} target="_blank" rel="noreferrer">
@@ -23,6 +24,10 @@ function Sources({ message }: { message: ChatMessage }) {
 }
 
 export function Message({ message }: { message: ChatMessage }) {
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const sourcesId = `sources-${message.id}`;
+  const sourceCount = message.sources?.length ?? 0;
+
   if (message.role === "assistant" && message.text.trim() === "" && !message.error) {
     return (
       <div className="message message-assistant">
@@ -58,7 +63,26 @@ export function Message({ message }: { message: ChatMessage }) {
         >
           {message.text}
         </ReactMarkdown>
-        <Sources message={message} />
+
+        {sourceCount > 0 && (
+          <button
+            type="button"
+            className="refs-toggle"
+            aria-expanded={sourcesOpen}
+            aria-controls={sourcesId}
+            onClick={() => setSourcesOpen((open) => !open)}
+          >
+            <span
+              className={`refs-chevron${sourcesOpen ? " refs-chevron-open" : ""}`}
+              aria-hidden="true"
+            />
+            References
+            <span className="refs-count">{sourceCount}</span>
+          </button>
+        )}
+
+        {sourcesOpen && <Sources message={message} id={sourcesId} />}
+
         {message.dataVersion && <div className="bubble-foot">manifest {message.dataVersion}</div>}
       </div>
     </div>

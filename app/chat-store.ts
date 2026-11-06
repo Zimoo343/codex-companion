@@ -26,6 +26,90 @@ export type ChatSession = {
   messages: ChatMessage[];
 };
 
+const TITLE_STOP_WORDS = new Set([
+  "what",
+  "whats",
+  "which",
+  "who",
+  "how",
+  "does",
+  "do",
+  "did",
+  "is",
+  "are",
+  "was",
+  "the",
+  "a",
+  "an",
+  "for",
+  "on",
+  "in",
+  "to",
+  "of",
+  "with",
+  "my",
+  "me",
+  "i",
+  "you",
+  "best",
+  "good",
+  "should",
+  "use",
+  "using",
+  "can",
+  "get",
+  "there",
+  "this",
+  "that",
+  "it",
+  "its",
+  "about",
+  "tell",
+  "any",
+  "some",
+  "currently",
+  "right",
+  "now",
+  "some",
+  "want",
+  "need",
+  "like",
+  "works",
+  "work",
+  "mean",
+  "means",
+]);
+
+// "which exotic class item combos are good for hunter survivability"
+//   -> "Exotic Class Item Combos Hunter"
+export function titleFromQuestion(question: string): string {
+  const words = question
+    .toLowerCase()
+    .replace(/[^a-z0-9' ]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !TITLE_STOP_WORDS.has(word));
+
+  const picked = words.slice(0, 4);
+  if (picked.length === 0) return question.slice(0, 40);
+
+  const ACRONYMS: Record<string, string> = {
+    dlc: "DLC",
+    pvp: "PvP",
+    pve: "PvE",
+    dps: "DPS",
+    lfg: "LFG",
+    lmg: "LMG",
+    smg: "SMG",
+    lfr: "LFR",
+    hgl: "HGL",
+    d2: "D2",
+  };
+
+  return picked
+    .map((word) => ACRONYMS[word] ?? word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 const STORAGE_KEY = "codex-companion.chats.v1";
 const INVITE_KEY = "codex-companion.invite";
 
@@ -84,10 +168,18 @@ export function useChatStore() {
         if (session.id !== sessionId) return session;
         const title =
           session.messages.length === 0 && message.role === "user"
-            ? message.text.slice(0, 60)
+            ? titleFromQuestion(message.text)
             : session.title;
         return { ...session, title, messages: [...session.messages, message] };
       }),
+    );
+  }, []);
+
+  const renameSession = useCallback((id: string, title: string) => {
+    const clean = title.trim().slice(0, 60);
+    if (!clean) return;
+    setSessions((current) =>
+      current.map((session) => (session.id === id ? { ...session, title: clean } : session)),
     );
   }, []);
 
@@ -116,6 +208,7 @@ export function useChatStore() {
     setActiveId,
     createSession,
     deleteSession,
+    renameSession,
     appendMessage,
     replaceMessage,
     ready,

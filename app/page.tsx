@@ -6,6 +6,7 @@ import { Sidebar } from "./components/Sidebar";
 import {
   getInviteCode,
   messageId,
+  titleFromQuestion,
   saveInviteCode,
   useChatStore,
   type ChatMessage,
@@ -33,6 +34,7 @@ export default function Home() {
     setActiveId,
     createSession,
     deleteSession,
+    renameSession,
     appendMessage,
     replaceMessage,
     ready,
@@ -113,7 +115,7 @@ export default function Home() {
     setPending(true);
     setInput("");
 
-    const session = active ?? createSession(text.slice(0, 60));
+    const session = active ?? createSession(titleFromQuestion(text));
     appendMessage(session.id, { id: messageId(), role: "user", text });
 
     const assistantId = messageId();
@@ -233,6 +235,7 @@ export default function Home() {
           }}
           onNew={startNewChat}
           onDelete={deleteSession}
+          onRename={renameSession}
           open={sidebarOpen}
           onToggle={() => setSidebarOpen((open) => !open)}
         />
