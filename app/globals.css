@@ -1,24 +1,21 @@
 :root {
   color-scheme: dark;
 
-  /* Palette borrowed from the Destiny companion aesthetic Braytech codified:
-     near-black green background, acrylic surfaces, teal interaction, tier accents. */
-  --bg: #101312;
-  --bg-deep: #0a0c0b;
-  --acrylic: color-mix(in srgb, #161a19 88%, transparent);
-  --acrylic-strong: color-mix(in srgb, #1b201f 94%, transparent);
-  --border: color-mix(in srgb, #ffffff 9%, transparent);
-  --border-strong: color-mix(in srgb, #ffffff 16%, transparent);
-  --text: #f2f5f4;
-  --muted: color-mix(in srgb, #f2f5f4 52%, transparent);
-  --accent: #00c295;
-  --accent-dim: color-mix(in srgb, #00c295 22%, transparent);
-  --exotic: #c39659;
-  --legendary: #50467c;
-  --rare: #73a3c4;
+  --bg: #0b0d13;
+  --bg-deep: #06080c;
+  --acrylic: rgba(255, 255, 255, 0.035);
+  --acrylic-strong: rgba(255, 255, 255, 0.06);
+  --border: rgba(220, 230, 245, 0.1);
+  --border-strong: rgba(220, 230, 245, 0.2);
+  --text: #e6ecf4;
+  --muted: rgba(230, 236, 244, 0.52);
+  --accent: #cfe0ef;
+  --accent-dim: rgba(207, 224, 239, 0.18);
+  --link: #9fd3e6;
+  --exotic: #c8b273;
   --danger: #ff4133;
 
-  --radius: 6px;
+  --radius: 4px;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
@@ -28,18 +25,22 @@
 
 html,
 body {
-  height: 100%;
-}
-
-body {
   margin: 0;
   background:
-    radial-gradient(1200px 700px at 78% -12%, rgba(0, 194, 149, 0.08), transparent 62%),
-    radial-gradient(900px 600px at 8% 8%, rgba(80, 70, 124, 0.1), transparent 60%), var(--bg);
+    radial-gradient(1100px 620px at 46% 86%, rgba(220, 178, 126, 0.2), transparent 66%),
+    radial-gradient(1000px 640px at 10% -6%, rgba(96, 148, 196, 0.3), transparent 66%),
+    radial-gradient(820px 560px at 94% 4%, rgba(136, 104, 184, 0.22), transparent 64%),
+    radial-gradient(2px 2px at 14% 26%, rgba(255, 255, 255, 0.5), transparent 100%),
+    radial-gradient(1px 1px at 28% 64%, rgba(255, 255, 255, 0.35), transparent 100%),
+    radial-gradient(1.5px 1.5px at 52% 34%, rgba(255, 255, 255, 0.4), transparent 100%),
+    radial-gradient(1px 1px at 71% 74%, rgba(255, 255, 255, 0.3), transparent 100%),
+    radial-gradient(2px 2px at 86% 30%, rgba(255, 255, 255, 0.35), transparent 100%),
+    radial-gradient(1px 1px at 64% 12%, rgba(255, 255, 255, 0.28), transparent 100%), var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-body), "Segoe UI", system-ui, sans-serif;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -57,6 +58,7 @@ input {
 
 .shell {
   display: grid;
+  overflow: hidden;
   grid-template-columns: 274px minmax(0, 1fr);
   height: 100vh;
   transition: grid-template-columns 220ms var(--ease);
@@ -64,6 +66,15 @@ input {
 
 .shell:not(.shell-with-sidebar) {
   grid-template-columns: 0 minmax(0, 1fr);
+}
+
+/* A zero-width column still leaks padding and text into view, so hide the panel. */
+.shell:not(.shell-with-sidebar) .sidebar {
+  opacity: 0;
+  visibility: hidden;
+  border-right-color: transparent;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 @media (max-width: 820px) {
@@ -90,10 +101,13 @@ input {
 
 .sidebar {
   display: flex;
+  transition:
+    opacity 160ms var(--ease),
+    visibility 160ms var(--ease);
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(18, 22, 21, 0.92), rgba(10, 12, 11, 0.96));
+  background: linear-gradient(180deg, rgba(14, 18, 26, 0.82), rgba(7, 9, 14, 0.9));
   backdrop-filter: blur(18px);
   border-right: 1px solid var(--border);
   padding: 14px 12px 10px;
@@ -109,9 +123,9 @@ input {
 
 .brand {
   font-family: var(--font-display), sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.34em;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.4em;
   color: var(--text);
   text-transform: uppercase;
 }
@@ -119,12 +133,11 @@ input {
 .brand::after {
   content: "";
   display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-left: 8px;
-  background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
-  transform: translateY(-1px);
+  width: 5px;
+  height: 5px;
+  margin-left: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  transform: rotate(45deg) translateY(-1px);
 }
 
 .icon-button {
@@ -149,20 +162,21 @@ input {
 
 .new-chat {
   position: relative;
-  background: var(--acrylic);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 1px solid var(--border-strong);
   color: var(--text);
   border-radius: var(--radius);
   padding: 10px 12px;
   text-align: left;
   cursor: pointer;
-  font-size: 13px;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display), sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   overflow: hidden;
   transition:
     border-color 160ms var(--ease),
-    background 160ms var(--ease),
-    transform 160ms var(--ease);
+    background 160ms var(--ease);
 }
 
 .new-chat::before {
@@ -170,15 +184,14 @@ input {
   position: absolute;
   inset: 0 auto 0 0;
   width: 2px;
-  background: var(--accent);
+  background: rgba(255, 255, 255, 0.85);
   opacity: 0;
   transition: opacity 160ms var(--ease);
 }
 
 .new-chat:hover {
-  background: var(--acrylic-strong);
-  border-color: var(--border-strong);
-  transform: translateX(1px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .new-chat:hover::before {
@@ -186,11 +199,12 @@ input {
 }
 
 .chat-list-label {
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-family: var(--font-display), sans-serif;
+  font-size: 9.5px;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--muted);
-  padding: 6px 6px 0;
+  padding: 8px 6px 2px;
 }
 
 .chat-list {
@@ -239,8 +253,7 @@ input {
   top: 6px;
   bottom: 6px;
   width: 2px;
-  background: var(--accent);
-  box-shadow: 0 0 8px rgba(0, 194, 149, 0.6);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .chat-select {
@@ -374,15 +387,15 @@ input {
   align-items: center;
   padding: 16px 26px 14px;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  background: rgba(9, 12, 18, 0.55);
   backdrop-filter: blur(14px);
 }
 
 .chat-head h1 {
   font-family: var(--font-display), sans-serif;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   margin: 0;
   color: var(--text);
@@ -461,22 +474,25 @@ input {
 }
 
 .sample::after {
-  content: "→";
-  color: var(--muted);
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-top: 1px solid var(--muted);
+  border-right: 1px solid var(--muted);
+  transform: rotate(45deg);
   transition:
     transform 150ms var(--ease),
-    color 150ms var(--ease);
+    border-color 150ms var(--ease);
 }
 
 .sample:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-  background: var(--acrylic-strong);
-  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .sample:hover::after {
-  transform: translateX(3px);
-  color: var(--accent);
+  transform: rotate(45deg) translate(1px, -1px);
+  border-color: var(--text);
 }
 
 /* ---------- messages ---------- */
@@ -515,11 +531,9 @@ input {
 }
 
 .bubble-assistant {
-  background: var(--acrylic);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--border);
-  border-left: 2px solid var(--exotic);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  border-left: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .bubble-error {
@@ -571,9 +585,9 @@ input {
 }
 
 .bubble a {
-  color: var(--accent);
+  color: var(--link);
   text-decoration: none;
-  border-bottom: 1px solid var(--accent-dim);
+  border-bottom: 1px solid rgba(159, 211, 230, 0.3);
 }
 
 .bubble a:hover {
@@ -655,12 +669,12 @@ input {
 }
 
 .sources a:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  color: var(--text);
+  border-bottom-color: rgba(255, 255, 255, 0.5);
 }
 
 .source-index {
-  color: var(--accent);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -714,7 +728,7 @@ input {
 .composer {
   border-top: 1px solid var(--border);
   padding: 12px 26px 14px;
-  background: color-mix(in srgb, var(--bg-deep) 88%, transparent);
+  background: rgba(7, 9, 14, 0.72);
   backdrop-filter: blur(16px);
 }
 
@@ -761,31 +775,30 @@ input {
 
 .composer textarea:focus {
   outline: none;
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  box-shadow: 0 0 0 1px var(--accent-dim);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .send {
   position: relative;
-  background: var(--accent);
-  color: #04140f;
+  background: #dbe6f0;
+  color: #0a0d12;
   border: 0;
   border-radius: var(--radius);
   padding: 0 22px;
   height: 54px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-family: var(--font-display), sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   cursor: pointer;
   transition:
-    filter 140ms var(--ease),
-    transform 140ms var(--ease);
+    background 140ms var(--ease),
+    opacity 140ms var(--ease);
 }
 
 .send:hover:not(:disabled) {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
+  background: #ffffff;
 }
 
 .send:disabled {
@@ -881,13 +894,12 @@ input {
 
 .gate-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent-dim);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .gate-button {
-  background: var(--accent);
-  color: #04140f;
+  background: #dbe6f0;
+  color: #0a0d12;
   border: 0;
   border-radius: var(--radius);
   padding: 0 18px;
@@ -961,4 +973,50 @@ input {
 .chat-item-confirming {
   background: rgba(255, 65, 51, 0.08);
   border-color: rgba(255, 65, 51, 0.35);
+}
+
+/* vignette + horizon light, the way the game frames its screens */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(130% 100% at 50% 46%, transparent 58%, rgba(0, 0, 0, 0.42) 100%),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.22),
+      transparent 30%,
+      transparent 74%,
+      rgba(0, 0, 0, 0.3)
+    );
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+}
+
+/* Display type follows the game's wide, light uppercase */
+.welcome h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
+.chat-head h1 {
+  letter-spacing: 0.32em;
+}
+
+.welcome .eyebrow {
+  letter-spacing: 0.42em;
+  color: color-mix(in srgb, var(--text) 62%, transparent);
+}
+
+.welcome p {
+  color: color-mix(in srgb, var(--text) 60%, transparent);
 }
