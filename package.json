@@ -33,6 +33,7 @@
     "drizzle-kit": "^0.31.11",
     "oxlint": "^1.0.0",
     "pg": "^8.23.1",
+    "playwright": "^1.65.0",
     "prettier": "^3.0.0",
     "typescript": "^7.0.2"
   },

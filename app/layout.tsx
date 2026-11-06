@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, Inter } from "next/font/google";
+import { Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 
-const display = Barlow_Condensed({
+const display = Inter_Tight({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   variable: "--font-display",

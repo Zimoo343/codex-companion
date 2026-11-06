@@ -47,6 +47,8 @@ export function Sidebar({
         + New chat
       </button>
 
+      <div className="chat-list-label">Chats</div>
+
       <nav className="chat-list">
         {sessions.length === 0 && <p className="empty">No chats yet.</p>}
         {sessions.map((session) => (

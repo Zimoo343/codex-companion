@@ -144,6 +144,7 @@ export default function Home() {
         <div className="messages">
           {(!ready || !active || active.messages.length === 0) && (
             <div className="welcome">
+              <div className="eyebrow">Destiny 2 knowledge</div>
               <h2>Ask about anything in Destiny 2</h2>
               <p>
                 Weapons, damage numbers, perks, exotics, aspects, raids and dungeons. Every answer
