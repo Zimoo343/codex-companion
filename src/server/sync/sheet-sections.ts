@@ -9,10 +9,20 @@ export type SheetSection = {
 
 const nonEmpty = (row: string[]) => row.filter((cell) => cell.trim() !== "").length;
 
+// A header row names its columns. Rows of short labels like "Weapon Traits" or
+// "Hunters / Titans / Warlocks" are section dividers wearing a header's clothes.
+const HEADER_WORDS =
+  /^(perk|name|boss|tier|weapon|weapons|armor|description|notes|ability|abilities|stat|stats|mod|mods|rank|ranking|type|value|source|damage|health|activity|icon|item|category|phase|setup|model|species|mechanics|range|adds|season|class|element|cost|effect)$/i;
+
+const isHeaderText = (row: string[]) => row.some((cell) => HEADER_WORDS.test(cell.trim()));
+
 export function parseSections(rows: string[][]): SheetSection[] {
   const sections: SheetSection[] = [];
   let section = "";
   let headers: string[] = [];
+  // Sections often share one header band at the top of the tab, so remember the
+  // last header seen for each row width and reuse it.
+  const lastHeaders = new Map<number, string[]>();
 
   for (const row of rows) {
     const filled = nonEmpty(row);
@@ -26,16 +36,29 @@ export function parseSections(rows: string[][]): SheetSection[] {
       continue;
     }
 
+    // A real header row is made of short labels. Some tables have no header at all,
+    // and some "title" rows carry a whole sentence, so a long cell means data.
     const looksLikeHeader =
-      headers.length === 0 ||
-      row.every((cell) => cell.trim() === "" || !/^\d+(\.\d+)?%?$/.test(cell.trim()));
+      headers.length === 0 &&
+      row.every((cell) => cell.trim() === "" || (cell.trim().length <= 40 && !cell.includes("\n")));
 
-    if (looksLikeHeader && headers.length === 0) {
+    if (looksLikeHeader && isHeaderText(row)) {
       headers = normalizeHeaders(row);
+      if (!lastHeaders.has(row.length)) lastHeaders.set(row.length, headers);
       continue;
     }
 
-    if (headers.length === 0) headers = normalizeHeaders(row);
+    if (looksLikeHeader && !isHeaderText(row)) {
+      // Short labels but no column names: a divider, not a header.
+      section = row.filter((cell) => cell.trim() !== "").join(" / ");
+      headers = [];
+      continue;
+    }
+
+    if (headers.length === 0) {
+      headers =
+        lastHeaders.get(row.length) ?? normalizeHeaders(row.map((_, index) => `col_${index}`));
+    }
 
     const record: Record<string, string> = {};
     headers.forEach((header, index) => {

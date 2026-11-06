@@ -34,10 +34,16 @@ test("skips rows that are only numbers, keeping headers intact", () => {
   assert.equal(sections[0]?.rows.length, 2);
 });
 
-test("ignores empty rows", () => {
-  const rows = [["Tab"], ["A", "B"], ["", ""], ["1", "2"]];
+test("treats short label rows as dividers, not headers", () => {
+  const rows = [
+    ["Weapon Traits", "", "Weapon Mods"],
+    ["Perk", "", "Description"],
+    ["Rampage", "", "More damage after kills"],
+  ];
+
   const sections = parseSections(rows);
-  assert.equal(sections[0]?.rows.length, 1);
+  assert.equal(sections[0]?.section, "Weapon Traits / Weapon Mods");
+  assert.equal(sections[0]?.rows[0]?.Perk, "Rampage");
 });
 
 test("keeps single-cell section titles from becoming headers", () => {

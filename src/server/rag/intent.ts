@@ -144,11 +144,13 @@ export function detectIntent(question: string): QuestionIntent {
     phrases.push(word);
     const next = words[index + 1];
     if (next) phrases.push(`${word} ${next}`);
+    const third = words[index + 2];
+    if (next && third) phrases.push(`${word} ${next} ${third}`);
   }
 
   return {
     families: [...families],
-    phrases: [...new Set(phrases)].slice(0, 8),
+    phrases: [...new Set(phrases)].slice(0, 12),
     wantsDamage: DAMAGE_WORDS.some((word) => text.includes(word)),
     wantsArmor: ARMOR_WORDS.some((word) => text.includes(word)),
     wantsActivity: ACTIVITY_WORDS.some((word) => text.includes(word)),

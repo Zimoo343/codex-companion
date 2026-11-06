@@ -171,10 +171,12 @@ async function querySheets(intent: QuestionIntent): Promise<string> {
   try {
     const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
     const result = await pool.query(
-      `select source, tab, section, row::text as data
+      `select source, tab, section, row::text as data,
+              (select count(*) from unnest($1::text[]) phrase where row::text ilike phrase
+                 or section ilike phrase or tab ilike phrase) as hits
          from sheet_rows
         where row::text ilike any($1) or section ilike any($1) or tab ilike any($1)
-        order by case when tab ilike any($1) then 0 else 1 end, length(row::text) desc
+        order by hits desc, length(row::text) asc
         limit 6`,
       [patterns],
     );
