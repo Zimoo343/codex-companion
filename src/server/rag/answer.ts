@@ -38,6 +38,7 @@ Rules:
 - If a source is about the original Destiny, say that instead of presenting it as Destiny 2.
 - When asked what pairs with a weapon, only suggest something from a different slot. A Heavy weapon cannot pair with another Heavy weapon. If the rotation rows name a specific pairing, quote that pairing instead of inventing one.
 - Answer the category that was asked. A question about exotic weapons must not be answered with exotic armour or subclass perks; if no weapon fits the evidence, say so.
+- The class item combination list is unordered unless a rating is given. Never crown one as "best"; present the pairings that fit the request and say the list is not ranked.
 - Mention the update or date when a source is a patch note or announcement.
 - Only cite sources that actually support a claim you make. If a source was retrieved but is irrelevant, ignore it.`;
 
@@ -60,11 +61,15 @@ const SHEET_URLS: Record<string, string> = {
 
 function entitySource(kind: string, meta: Record<string, string>): string {
   if (kind === "recommendation" || kind === "damage_frame") return "AegisRelic";
+  if (kind === "class_item_combo" || kind === "build") return "AegisRelic class items";
   if (kind === "sheet_row") return meta.source ?? "Community sheet";
   return "Bungie manifest";
 }
 
 function toolUrl(kind: string, meta: Record<string, string>): string {
+  if (kind === "class_item_combo" || kind === "build") {
+    return "https://docs.google.com/spreadsheets/d/1-pvCrjb9QLEwvQn0YquCxvZzMh25gMIh4ZrNe1DdAsY";
+  }
   if (kind === "recommendation" || kind === "damage_frame") return SHEET_URLS.AegisRelic!;
   if (kind === "sheet_row") return SHEET_URLS[meta.source ?? ""] ?? SHEET_URLS.AegisRelic!;
   return "https://www.bungie.net/7/en/Destiny/NewLight";

@@ -165,6 +165,35 @@ export const sheetRows = pgTable(
   (table) => [index("sheet_rows_source_tab_idx").on(table.source, table.tab)],
 );
 
+// Exotic class items are two "Spirit of X" perks rolled together, and the community
+// keeps a curated list of the pairings worth chasing.
+export const classItemCombos = pgTable(
+  "class_item_combos",
+  {
+    id: serial("id").primaryKey(),
+    class: text("class").notNull(),
+    traitOne: text("trait_one").notNull(),
+    traitTwo: text("trait_two").notNull(),
+    source: text("source").notNull().default("AegisRelic class items"),
+  },
+  (table) => [
+    unique("class_item_combos_unique").on(table.class, table.traitOne, table.traitTwo),
+    index("class_item_combos_class_idx").on(table.class),
+  ],
+);
+
+export const builds = pgTable("builds", {
+  id: serial("id").primaryKey(),
+  class: text("class").notNull(),
+  rank: integer("rank").notNull(),
+  exoticCombo: text("exotic_combo").notNull().default(""),
+  super: text("super").notNull().default(""),
+  abilities: text("abilities").notNull().default(""),
+  aspects: text("aspects").notNull().default(""),
+  fragments: text("fragments").notNull().default(""),
+  source: text("source").notNull().default("AegisRelic class items"),
+});
+
 export const externalTools = pgTable("external_tools", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 80 }).notNull().unique(),

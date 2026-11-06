@@ -11,6 +11,8 @@ const BOSS_URL =
   "https://docs.google.com/spreadsheets/d/1_5wtBjRYHHxuF4oJKDb_iOGZs-wTkzB6RYbnyNLbuz4";
 const DDC_URL =
   "https://docs.google.com/spreadsheets/d/1WaxvbLx7UoSZaBqdFr1u32F2uWVLo-CJunJB4nlGUE4";
+const SHEET_CLASS_ITEMS =
+  "https://docs.google.com/spreadsheets/d/1-pvCrjb9QLEwvQn0YquCxvZzMh25gMIh4ZrNe1DdAsY";
 
 export function sheetUrl(source: string): string {
   if (source === "AegisRelic Boss Damage") return BOSS_URL;
@@ -278,6 +280,77 @@ async function queryExoticWeapons(
   }
 }
 
+// Exotic class items and builds were missing entirely: a class item rolls two Spirit
+// perks, so a single perk row never answers "which combos exist".
+async function queryClassItems(
+  intent: QuestionIntent,
+  question: string,
+): Promise<{ text: string; origins: Origin[] }> {
+  const wantsClassItem = /class item|spirit of|dual destiny|exotic class/i.test(question);
+  const wantsBuild = /build|loadout|aspect|fragment/i.test(question);
+  if (!wantsClassItem && !wantsBuild) return { text: "", origins: [] };
+
+  const namedClass = ["hunter", "titan", "warlock"].find((name) =>
+    intent.phrases.some((phrase) => phrase === name),
+  );
+
+  const { pool } = createDatabase();
+  try {
+    const sections: string[] = [];
+
+    if (wantsClassItem) {
+      const combos = await pool.query(
+        `select class, trait_one, trait_two from class_item_combos
+          where ($1::text is null or lower(class) = $1)
+          order by class, trait_one
+          limit 12`,
+        [namedClass ?? null],
+      );
+      if (combos.rows.length > 0) {
+        sections.push(
+          `Exotic class item combinations:\n${combos.rows
+            .map((row) => `${row.class}: ${row.trait_one} + ${row.trait_two}`)
+            .join("\n")}`,
+        );
+      }
+    }
+
+    if (wantsBuild) {
+      const builds = await pool.query(
+        `select class, rank, exotic_combo, super, abilities, aspects, fragments from builds
+          where ($1::text is null or lower(class) = $1)
+          order by class, rank`,
+        [namedClass ?? null],
+      );
+      if (builds.rows.length > 0) {
+        sections.push(
+          `Recommended builds:\n${builds.rows
+            .map(
+              (row) =>
+                `${row.class} build ${row.rank}: ${row.exotic_combo}; super ${row.super}; abilities ${row.abilities}; aspects ${row.aspects}; fragments ${row.fragments}`,
+            )
+            .join("\n")}`,
+        );
+      }
+    }
+
+    if (sections.length === 0) return { text: "", origins: [] };
+
+    return {
+      text: sections.join("\n\n"),
+      origins: [
+        {
+          title: "Class items · combinations",
+          sourceName: "AegisRelic class items",
+          url: SHEET_CLASS_ITEMS,
+        },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 async function querySheets(intent: QuestionIntent): Promise<{ text: string; origins: Origin[] }> {
   const { pool } = createDatabase();
   try {
@@ -342,6 +415,7 @@ export async function buildStructuredContext(
     querySheets(intent),
     queryRotations(intent),
     queryExoticWeapons(intent, context),
+    queryClassItems(intent, context),
   ]);
 
   const origins: Origin[] = [];

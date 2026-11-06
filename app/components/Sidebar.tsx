@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ChatSession } from "../chat-store";
 
 type SidebarProps = {
@@ -26,6 +27,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [hold, setHold] = useState<{ id: string; progress: number } | null>(null);
+  const [creditsOpen, setCreditsOpen] = useState(false);
 
   const frame = useRef<number | null>(null);
   const lastTick = useRef<number>(0);
@@ -160,10 +162,102 @@ export function Sidebar({
           source
         </a>
         <span>·</span>
-        <a href="https://www.destinypedia.com" target="_blank" rel="noreferrer">
+        <button className="link-button" onClick={() => setCreditsOpen(true)}>
           credits
-        </a>
+        </button>
       </div>
+
+      {creditsOpen &&
+        createPortal(
+          <div
+            className="gate"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Data credits"
+            onClick={() => setCreditsOpen(false)}
+          >
+            <div className="gate-panel credits-panel" onClick={(event) => event.stopPropagation()}>
+              <div className="gate-mark">Data credits</div>
+              <h2>Where answers come from</h2>
+              <ul className="credits-list">
+                <li>
+                  <a
+                    href="https://www.bungie.net/Platform/Destiny2/Manifest/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Bungie Destiny 2 manifest
+                  </a>
+                  <span>Weapons, exotic armour, aspects, fragments, activities</span>
+                </li>
+                <li>
+                  <a
+                    href="https://docs.google.com/spreadsheets/d/1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    AegisRelic — Endgame Analysis
+                  </a>
+                  <span>Tier list, recommended perks, damage frames</span>
+                </li>
+                <li>
+                  <a
+                    href="https://docs.google.com/spreadsheets/d/1_5wtBjRYHHxuF4oJKDb_iOGZs-wTkzB6RYbnyNLbuz4"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    AegisRelic — Boss Damage
+                  </a>
+                  <span>Damage rotations, swap and sustained numbers, boss rankings</span>
+                </li>
+                <li>
+                  <a
+                    href="https://docs.google.com/spreadsheets/d/1-pvCrjb9QLEwvQn0YquCxvZzMh25gMIh4ZrNe1DdAsY"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    AegisRelic — Exotic Class Items
+                  </a>
+                  <span>Spirit perk combinations and recommended builds</span>
+                </li>
+                <li>
+                  <a
+                    href="https://docs.google.com/spreadsheets/d/1WaxvbLx7UoSZaBqdFr1u32F2uWVLo-CJunJB4nlGUE4"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Destiny Data Compendium
+                  </a>
+                  <span>Perk text, armour perks, class abilities, game mechanics</span>
+                </li>
+                <li>
+                  <a href="https://www.destinypedia.com" target="_blank" rel="noreferrer">
+                    Destinypedia
+                  </a>
+                  <span>Mechanics pages, CC BY-SA 4.0</span>
+                </li>
+                <li>
+                  <a
+                    href="https://store.steampowered.com/news/app/1085660"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Official Bungie announcements
+                  </a>
+                  <span>Patch news via Steam</span>
+                </li>
+              </ul>
+              <p className="gate-foot">
+                Community data stays with its authors. It is credited and linked here, never
+                re-hosted.
+              </p>
+              <button className="gate-button credits-close" onClick={() => setCreditsOpen(false)}>
+                Close
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </aside>
   );
 }

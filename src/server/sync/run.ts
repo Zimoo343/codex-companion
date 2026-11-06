@@ -15,6 +15,7 @@ import {
 } from "./sheets.ts";
 import externalTools from "./external-tools.json" with { type: "json" };
 import { syncCommunitySheets } from "./sheets-extra.ts";
+import { ingestClassItemSheet } from "./sheets-classitems.ts";
 
 const CHUNK = 200;
 
@@ -179,5 +180,9 @@ if (target === "all" || target === "sheets") await syncSheets();
 if (target === "all" || target === "community") {
   const counts = await syncCommunitySheets();
   for (const [source, count] of Object.entries(counts)) console.log(`${source}: ${count} rows`);
+}
+if (target === "all" || target === "classitems") {
+  const result = await ingestClassItemSheet();
+  console.log(`class_item_combos ${result.combos}, builds ${result.builds}`);
 }
 if (target === "all" || target === "reference") await seedReferenceData();

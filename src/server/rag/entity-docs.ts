@@ -141,6 +141,35 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
       );
     }
 
+    // Exotic class items: one document per known pairing, plus the recommended builds.
+    const combos = await pool.query(`select class, trait_one, trait_two from class_item_combos`);
+    for (const row of combos.rows) {
+      push(
+        "class_item_combo",
+        `${row.class} ${row.trait_one} + ${row.trait_two}`,
+        `${row.class} exotic class item combination: ${row.trait_one} together with ${row.trait_two}. Exotic class items carry two Spirit perks, one in each column, and this is a pairing listed by AegisRelic's class item sheet.`,
+        { class: row.class },
+      );
+    }
+
+    const builds = await pool.query(
+      `select class, rank, exotic_combo, super, abilities, aspects, fragments from builds`,
+    );
+    for (const row of builds.rows) {
+      push(
+        "build",
+        `${row.class} build ${row.rank}`,
+        sentence([
+          `${row.class} build: ${row.exotic_combo}.`,
+          row.super ? `Super: ${row.super}.` : "",
+          row.abilities ? `Abilities: ${row.abilities}.` : "",
+          row.aspects ? `Aspects: ${row.aspects}.` : "",
+          row.fragments ? `Fragments: ${row.fragments}.` : "",
+        ]),
+        { class: row.class },
+      );
+    }
+
     const sheetRows = await pool.query(`select source, tab, section, row from sheet_rows`);
     for (const sheetRow of sheetRows.rows) {
       const entries = Object.entries(sheetRow.row as Record<string, string>).filter(
