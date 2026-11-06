@@ -24,15 +24,57 @@ const FAMILY_KEYWORDS: Array<{ tab: string; words: string[] }> = [
 ];
 
 const DAMAGE_WORDS = ["dps", "damage", "best", "meta", "tier", "strongest", "top"];
+// "exotic" alone says nothing about the category: exotic weapons and exotic armour
+// are different tables, and mixing them produced answers about armour perks to
+// questions about weapons.
 const ARMOR_WORDS = [
   "armor",
   "helmet",
+  "gauntlets",
   "gauntlet",
-  "chest",
+  "chest armor",
   "leg armor",
   "class item",
-  "exotic",
-  "stat",
+  "stat split",
+];
+
+const WEAPON_WORDS = [
+  "weapon",
+  "gun",
+  "rocket",
+  "sniper",
+  "shotgun",
+  "fusion",
+  "linear fusion",
+  "machine gun",
+  "lmg",
+  "auto rifle",
+  "hand cannon",
+  "pulse",
+  "scout",
+  "sidearm",
+  "smg",
+  "submachine",
+  "glaive",
+  "sword",
+  "bow",
+  "trace rifle",
+  "launcher",
+  "grenade launcher",
+];
+
+const ROTATION_WORDS = [
+  "rotation",
+  "rotations",
+  "damage phase",
+  "dps phase",
+  "swap",
+  "swapping",
+  "loadout",
+  "pair",
+  "pairing",
+  "combo",
+  "burst",
 ];
 const ACTIVITY_WORDS = ["raid", "dungeon", "strike", "nightfall", "lost sector", "exotic mission"];
 const SUBCLASS_WORDS = [
@@ -99,6 +141,9 @@ export type QuestionIntent = {
   phrases: string[];
   wantsDamage: boolean;
   wantsArmor: boolean;
+  wantsWeapon: boolean;
+  wantsRotation: boolean;
+  wantsExotic: boolean;
   wantsActivity: boolean;
   wantsSubclass: boolean;
 };
@@ -153,6 +198,9 @@ export function detectIntent(question: string): QuestionIntent {
     phrases: [...new Set(phrases)].slice(0, 12),
     wantsDamage: DAMAGE_WORDS.some((word) => text.includes(word)),
     wantsArmor: ARMOR_WORDS.some((word) => text.includes(word)),
+    wantsWeapon: WEAPON_WORDS.some((word) => text.includes(word)) || [...families].length > 0,
+    wantsRotation: ROTATION_WORDS.some((word) => text.includes(word)),
+    wantsExotic: text.includes("exotic"),
     wantsActivity: ACTIVITY_WORDS.some((word) => text.includes(word)),
     wantsSubclass: SUBCLASS_WORDS.some((word) => text.includes(word)),
   };

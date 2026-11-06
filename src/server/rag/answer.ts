@@ -36,6 +36,8 @@ Rules:
 - Never invent a number. If neither data nor sources answer, say so.
 - Never list weapons, armor or perks that do not appear in GAME DATA or the wiki sources, even as "usual picks". If the evidence is missing, say it is missing and stop.
 - If a source is about the original Destiny, say that instead of presenting it as Destiny 2.
+- When asked what pairs with a weapon, only suggest something from a different slot. A Heavy weapon cannot pair with another Heavy weapon. If the rotation rows name a specific pairing, quote that pairing instead of inventing one.
+- Answer the category that was asked. A question about exotic weapons must not be answered with exotic armour or subclass perks; if no weapon fits the evidence, say so.
 - Mention the update or date when a source is a patch note or announcement.
 - Only cite sources that actually support a claim you make. If a source was retrieved but is irrelevant, ignore it.`;
 
@@ -126,13 +128,17 @@ export type PreparedAnswer = {
   messages: Array<{ role: string; content: string }>;
 };
 
-export async function prepareAnswer(question: string, limit = 5): Promise<PreparedAnswer> {
+export async function prepareAnswer(
+  question: string,
+  limit = 5,
+  history = "",
+): Promise<PreparedAnswer> {
   const vector = await embedQuestion(question);
 
   const [allHits, entities, structured] = await Promise.all([
     searchGuidesByVector(vector, question, limit),
     searchEntities(vector, 6),
-    buildStructuredContext(question),
+    buildStructuredContext(question, history),
   ]);
 
   // Cosine scores are compressed, so an absolute cutoff cannot separate relevant from
@@ -153,7 +159,30 @@ export async function prepareAnswer(question: string, limit = 5): Promise<Prepar
   // kinds the question is not about (a rocket question does not want subclass plugs).
   const wantsSubclass = /aspect|fragment|subclass|artifact|melee|grenade|super/i.test(question);
   const wantsActivity = /raid|dungeon|strike|nightfall|lost sector|activity/i.test(question);
+  // Sheet-derived entities carry their tab; keep them in the asked category too.
+  const ARMOR_TABS = [
+    "Armor Perks",
+    "Armor Mods",
+    "Exotic Armors",
+    "Exotic Class",
+    "Class Abilities",
+  ];
+  const WEAPON_TABS = ["Weapon Perks", "Exotic Weapons"];
+  // Use the conversation too: "pair it with..." only names a category in the history.
+  const filterText = `${history}
+${question}`;
+  const asksWeapon =
+    /\b(weapon|rocket|sniper|shotgun|fusion|linear|machine gun|lmg|auto rifle|hand cannon|pulse|scout|sidearm|smg|glaive|sword|bow|trace|launcher)\b/i.test(
+      filterText,
+    );
+  const asksArmor = /\b(armor|helmet|gauntlet|chest|legs|class item)\b/i.test(filterText);
+
   const relevant = entities.filter((entity) => {
+    if (entity.kind === "sheet_row") {
+      const tab = entity.meta.tab ?? "";
+      if (asksWeapon && !asksArmor && ARMOR_TABS.includes(tab)) return false;
+      if (asksArmor && !asksWeapon && WEAPON_TABS.includes(tab)) return false;
+    }
     if (entity.kind === "subclass_plug" && !wantsSubclass) return false;
     if (entity.kind === "activity" && !wantsActivity) return false;
     return true;
@@ -175,6 +204,10 @@ export async function prepareAnswer(question: string, limit = 5): Promise<Prepar
       ? `ENTITY DATA (semantic matches across weapons, armor, activities, perks and sheet rows)\n\n${entityText}`
       : "",
     `WIKI SOURCES\n\n${formatSources(hits)}`,
+    history
+      ? `Recent conversation (context only, do not repeat it):
+${history}`
+      : "",
     `Question: ${question}`,
   ].filter(Boolean);
 
@@ -213,9 +246,8 @@ export async function prepareAnswer(question: string, limit = 5): Promise<Prepar
   };
 }
 
-export async function answerQuestion(question: string, limit = 5): Promise<Answer> {
-  const prepared = await prepareAnswer(question, limit);
+export async function answerQuestion(question: string, limit = 5, history = ""): Promise<Answer> {
+  const prepared = await prepareAnswer(question, limit, history);
   const answer = await chat(prepared.messages);
   return { answer, sources: prepared.sources, dataVersion: prepared.dataVersion };
 }
-

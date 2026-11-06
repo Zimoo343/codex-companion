@@ -39,3 +39,18 @@ test("does not invent flags for neutral questions", () => {
   assert.equal(intent.wantsDamage, false);
   assert.equal(intent.wantsArmor, false);
 });
+
+test("exotic weapons and exotic armour are different categories", () => {
+  const weapon = detectIntent("which exotic weapon should I pair with my rocket");
+  assert.equal(weapon.wantsWeapon, true);
+  assert.equal(weapon.wantsArmor, false);
+  assert.equal(weapon.wantsExotic, true);
+  assert.equal(weapon.wantsRotation, true);
+
+  const armor = detectIntent("which exotic armor should a hunter use for survivability");
+  assert.equal(armor.wantsArmor, true);
+  assert.equal(armor.wantsWeapon, false);
+
+  const helmet = detectIntent("best exotic helmet for a titan");
+  assert.equal(helmet.wantsArmor, true);
+});

@@ -5,9 +5,12 @@ type Row = Record<string, unknown>;
 
 export type Origin = { title: string; sourceName: string; url: string };
 
-const AEGIS_URL = "https://docs.google.com/spreadsheets/d/1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY";
-const BOSS_URL = "https://docs.google.com/spreadsheets/d/1_5wtBjRYHHxuF4oJKDb_iOGZs-wTkzB6RYbnyNLbuz4";
-const DDC_URL = "https://docs.google.com/spreadsheets/d/1WaxvbLx7UoSZaBqdFr1u32F2uWVLo-CJunJB4nlGUE4";
+const AEGIS_URL =
+  "https://docs.google.com/spreadsheets/d/1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY";
+const BOSS_URL =
+  "https://docs.google.com/spreadsheets/d/1_5wtBjRYHHxuF4oJKDb_iOGZs-wTkzB6RYbnyNLbuz4";
+const DDC_URL =
+  "https://docs.google.com/spreadsheets/d/1WaxvbLx7UoSZaBqdFr1u32F2uWVLo-CJunJB4nlGUE4";
 
 export function sheetUrl(source: string): string {
   if (source === "AegisRelic Boss Damage") return BOSS_URL;
@@ -189,19 +192,119 @@ async function queryEntities(intent: QuestionIntent): Promise<{ text: string; or
   }
 }
 
+// Damage rotations live in the Boss Damage sheet's Swap and Sustained tabs, which no
+// entity text captures well.
+async function queryRotations(
+  intent: QuestionIntent,
+): Promise<{ text: string; origins: Origin[] }> {
+  if (!intent.wantsRotation) return { text: "", origins: [] };
+
+  const { pool } = createDatabase();
+  try {
+    const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
+    const result = await pool.query(
+      `select tab, section, row::text as data,
+              (select count(*) from unnest($1::text[]) phrase where row::text ilike phrase) as hits,
+              (row::text ilike '%exotic%') as mentions_exotic
+         from sheet_rows
+        where source = 'AegisRelic Boss Damage'
+          and tab in ('Swap', 'Sustained', 'Weapons', 'Ranking (S29)')
+        order by mentions_exotic desc, hits desc, length(row::text) asc
+        limit 8`,
+      [patterns],
+    );
+    if (result.rows.length === 0) return { text: "", origins: [] };
+
+    const lines = result.rows.map((entry) => `[${entry.tab}] ${entry.data}`);
+    return {
+      text: `Damage rotation and swap entries (AegisRelic Boss Damage):\n${lines.join("\n")}`,
+      origins: [
+        { title: "Boss Damage · rotations", sourceName: "AegisRelic Boss Damage", url: BOSS_URL },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
+// When the question asks for an exotic weapon, list the actual exotics rather than
+// whatever an embedding happened to surface.
+async function queryExoticWeapons(
+  intent: QuestionIntent,
+  question: string,
+): Promise<{ text: string; origins: Origin[] }> {
+  if (!intent.wantsExotic || !intent.wantsWeapon || intent.wantsArmor) {
+    return { text: "", origins: [] };
+  }
+
+  const element = /\b(solar|arc|void|stasis|strand|kinetic)\b/i.exec(question)?.[1];
+  const { pool } = createDatabase();
+  try {
+    // A pairing must not share a slot with the weapon being paired. Find the anchor
+    // weapon by name, else assume heavy when the question says "rocket".
+    const anchor = await pool.query<{ name: string; ammo_type: string }>(
+      `select name, ammo_type from weapons
+        where length(name) > 3 and position(lower(name) in lower($1)) > 0
+        order by length(name) desc
+        limit 1`,
+      [question],
+    );
+    const anchorAmmo = anchor.rows[0]?.ammo_type ?? null;
+    const excludeAmmo = anchorAmmo ?? (/\b(rocket|heavy|boss)\b/i.test(question) ? "Heavy" : null);
+
+    const result = await pool.query(
+      `select name, type, damage_type, ammo_type
+         from weapons
+        where tier = 'Exotic'
+          and ($1::text is null or damage_type ilike $1)
+          and ($2::text is null or ammo_type <> $2)
+        order by ammo_type, name
+        limit 15`,
+      [element ?? null, excludeAmmo],
+    );
+    if (result.rows.length === 0) return { text: "", origins: [] };
+
+    const lines = result.rows.map(
+      (row) => `${row.name}: Exotic ${row.damage_type} ${row.type}, ${row.ammo_type} ammo`,
+    );
+    return {
+      text: `Exotic weapons${element ? ` (${element})` : ""}:\n${lines.join("\n")}`,
+      origins: [
+        { title: "Exotic weapons", sourceName: "Bungie manifest", url: "https://www.bungie.net" },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 async function querySheets(intent: QuestionIntent): Promise<{ text: string; origins: Origin[] }> {
   const { pool } = createDatabase();
   try {
     const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
+
+    // Keep tabs in the category that was asked about: an exotic weapon question must
+    // not surface armour perks or class abilities.
+    const ARMOR_TABS = [
+      "Armor Perks",
+      "Armor Mods",
+      "Exotic Armors",
+      "Exotic Class",
+      "Class Abilities",
+    ];
+    const WEAPON_TABS = ["Weapon Perks", "Exotic Weapons"];
+    const excluded = intent.wantsWeapon && !intent.wantsArmor ? ARMOR_TABS : [];
+
     const result = await pool.query(
       `select source, tab, section, row::text as data,
               (select count(*) from unnest($1::text[]) phrase where row::text ilike phrase
                  or section ilike phrase or tab ilike phrase) as hits
          from sheet_rows
-        where row::text ilike any($1) or section ilike any($1) or tab ilike any($1)
+        where (row::text ilike any($1) or section ilike any($1) or tab ilike any($1))
+          and not (tab = any($2::text[]))
         order by hits desc, length(row::text) asc
         limit 6`,
-      [patterns],
+      [patterns, excluded],
     );
     if (result.rows.length === 0) return { text: "", origins: [] };
 
@@ -227,13 +330,18 @@ async function querySheets(intent: QuestionIntent): Promise<{ text: string; orig
 
 export async function buildStructuredContext(
   question: string,
+  history = "",
 ): Promise<{ text: string; origins: Origin[] }> {
-  const intent = detectIntent(question);
-  const heavyOnly = /\b(heavy|power|boss)\b/i.test(question);
+  // Follow-ups like "pair it with something" only make sense with the earlier turns.
+  const context = history ? `${history}\n${question}` : question;
+  const intent = detectIntent(context);
+  const heavyOnly = /\b(heavy|power|boss)\b/i.test(context);
   const parts = await Promise.all([
     queryFamilies(intent.families, intent.wantsDamage, heavyOnly),
     queryEntities(intent),
     querySheets(intent),
+    queryRotations(intent),
+    queryExoticWeapons(intent, context),
   ]);
 
   const origins: Origin[] = [];
@@ -246,5 +354,11 @@ export async function buildStructuredContext(
     }
   }
 
-  return { text: parts.map((part) => part.text).filter(Boolean).join("\n\n"), origins };
+  return {
+    text: parts
+      .map((part) => part.text)
+      .filter(Boolean)
+      .join("\n\n"),
+    origins,
+  };
 }

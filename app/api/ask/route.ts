@@ -27,8 +27,12 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invite code required." }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => null)) as { question?: string } | null;
+  const body = (await request.json().catch(() => null)) as {
+    question?: string;
+    history?: string;
+  } | null;
   const question = body?.question?.trim();
+  const history = (body?.history ?? "").slice(0, 2000);
   if (!question || question.length < 3) {
     return Response.json({ error: "Ask a question first." }, { status: 400 });
   }
@@ -46,7 +50,7 @@ export async function POST(request: Request) {
 
   let prepared;
   try {
-    prepared = await prepareAnswer(question);
+    prepared = await prepareAnswer(question, 5, history);
   } catch (error) {
     console.error("prepare failed", error);
     return Response.json({ error: "The companion could not answer right now." }, { status: 500 });

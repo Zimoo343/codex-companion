@@ -127,7 +127,13 @@ export default function Home() {
       const response = await fetch("/api/ask", {
         method: "POST",
         headers: { "content-type": "application/json", "x-access-code": inviteCode },
-        body: JSON.stringify({ question: text }),
+        body: JSON.stringify({
+          question: text,
+          history: (active?.messages ?? [])
+            .slice(-6)
+            .map((message) => `${message.role}: ${message.text}`)
+            .join("\n"),
+        }),
       });
 
       if (response.status !== 200 || !response.body) {
