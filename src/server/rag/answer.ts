@@ -39,6 +39,9 @@ Rules:
 - When asked what pairs with a weapon, only suggest something from a different slot. A Heavy weapon cannot pair with another Heavy weapon. If the rotation rows name a specific pairing, quote that pairing instead of inventing one.
 - Answer the category that was asked. A question about exotic weapons must not be answered with exotic armour or subclass perks; if no weapon fits the evidence, say so.
 - The class item combination list is unordered unless a rating is given. Never crown one as "best"; present the pairings that fit the request and say the list is not ranked.
+- If the evidence lists several exotics for a class, summarise three to five of them with a one-line effect each. Do not answer a broad "what exotic for X" question with a single item.
+- Nothing in the data tracks popularity or usage. If asked for a "popular" exotic, say there is no usage data and list what the options do instead of crowning one.
+- "Spirit of X" perks belong only to exotic class items. Never present one as the standalone exotic with a similar name (Spirit of the Inmost Light is not Heart of Inmost Light), and never present a class-item perk as that class's armour exotic.
 - Mention the update or date when a source is a patch note or announcement.
 - Only cite sources that actually support a claim you make. If a source was retrieved but is irrelevant, ignore it.`;
 
@@ -182,7 +185,21 @@ ${question}`;
     );
   const asksArmor = /\b(armor|helmet|gauntlet|chest|legs|class item)\b/i.test(filterText);
 
+  const asksClassItem = /class item|spirit of|dual destiny|exotic class/i.test(filterText);
+  const asksBuild = /\bbuild\b|loadout|aspect|fragment/i.test(filterText);
+  const namedClass = /\b(hunter|titan|warlock)\b/i.exec(filterText)?.[1]?.toLowerCase();
+
   const relevant = entities.filter((entity) => {
+    // Class item perks are not standalone exotics; keep them out unless asked for.
+    if (entity.kind === "class_item_combo" && !asksClassItem) return false;
+    if (entity.kind === "build" && !asksBuild && !asksClassItem) return false;
+
+    // Scope armour to the class named in the question.
+    if (entity.kind === "armor" && namedClass && entity.meta.class) {
+      const armourClass = entity.meta.class.toLowerCase();
+      if (armourClass !== namedClass && armourClass !== "any") return false;
+    }
+
     if (entity.kind === "sheet_row") {
       const tab = entity.meta.tab ?? "";
       if (asksWeapon && !asksArmor && ARMOR_TABS.includes(tab)) return false;

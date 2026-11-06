@@ -287,7 +287,7 @@ async function queryClassItems(
   question: string,
 ): Promise<{ text: string; origins: Origin[] }> {
   const wantsClassItem = /class item|spirit of|dual destiny|exotic class/i.test(question);
-  const wantsBuild = /build|loadout|aspect|fragment/i.test(question);
+  const wantsBuild = /\bbuild\b|loadout|aspect|fragment/i.test(question);
   if (!wantsClassItem && !wantsBuild) return { text: "", origins: [] };
 
   const namedClass = ["hunter", "titan", "warlock"].find((name) =>
@@ -344,6 +344,39 @@ async function queryClassItems(
           sourceName: "AegisRelic class items",
           url: SHEET_CLASS_ITEMS,
         },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
+// No source of ours tracks "popular", so an armour question is answered with the
+// actual options for that class, each with its perk text.
+async function queryArmorForClass(question: string): Promise<{ text: string; origins: Origin[] }> {
+  const namedClass = /\b(hunter|titan|warlock)\b/i.exec(question)?.[1]?.toLowerCase();
+  const asksArmor = /\bexotic|armor|helmet|gauntlet|chest|leg|class item\b/i.test(question);
+  if (!namedClass || !asksArmor) return { text: "", origins: [] };
+
+  const { pool } = createDatabase();
+  try {
+    const result = await pool.query(
+      `select name, slot, left(description, 180) as effect
+         from armor
+        where lower(class) = $1
+        order by name
+        limit 10`,
+      [namedClass],
+    );
+    if (result.rows.length === 0) return { text: "", origins: [] };
+
+    const lines = result.rows.map(
+      (row) => `${row.name} (${row.slot}): ${String(row.effect).replace(/\s+/g, " ")}`,
+    );
+    return {
+      text: `${namedClass} exotic armour, from the manifest:\n${lines.join("\n")}`,
+      origins: [
+        { title: "Exotic armour", sourceName: "Bungie manifest", url: "https://www.bungie.net" },
       ],
     };
   } finally {
@@ -416,6 +449,7 @@ export async function buildStructuredContext(
     queryRotations(intent),
     queryExoticWeapons(intent, context),
     queryClassItems(intent, context),
+    queryArmorForClass(context),
   ]);
 
   const origins: Origin[] = [];
