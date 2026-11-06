@@ -11,6 +11,7 @@ export type GuideHit = {
   publishedAt: Date | null;
   content: string;
   score: number;
+  vectorScore: number;
   vectorRank: number | null;
   keywordRank: number | null;
 };
@@ -28,7 +29,8 @@ const HYBRID_SQL = `
     select $1::vector as vec, websearch_to_tsquery('english', $4) as tsq
   ),
   vector_ranked as (
-    select g.id, row_number() over (order by g.embedding <=> q.vec) as rank_vector
+    select g.id, row_number() over (order by g.embedding <=> q.vec) as rank_vector,
+           (1 - (g.embedding <=> q.vec))::float8 as vector_score
       from guides g, q
      where g.embedding is not null and g.era <> 'd1'
      order by g.embedding <=> q.vec
@@ -45,6 +47,7 @@ const HYBRID_SQL = `
     select coalesce(v.id, k.id) as id,
            coalesce(v.rank_vector, null) as rank_vector,
            coalesce(k.rank_keyword, null) as rank_keyword,
+           coalesce(v.vector_score, 0) as vector_score,
            coalesce(1.0 / (${RRF_K} + v.rank_vector), 0)
              + coalesce(1.0 / (${RRF_K} + k.rank_keyword), 0) as score
       from vector_ranked v
@@ -53,6 +56,7 @@ const HYBRID_SQL = `
   select g.id, g.title, g.section, g.url, g.source_name as "sourceName",
          g.license_note as "licenseNote", g.published_at as "publishedAt", g.content,
          m.score::float8 as score, m.rank_vector::int as "vectorRank", m.rank_keyword::int as "keywordRank",
+         m.vector_score as "vectorScore",
          row_number() over (partition by g.title order by m.score desc) as position
     from merged m
     join guides g on g.id = m.id

@@ -12,6 +12,11 @@ const fallbackModel = process.env.LLM_FALLBACK_MODEL;
 
 const SYSTEM_PROMPT = `You are a Destiny 2 expert answering questions for new and returning players.
 
+Voice rules:
+- Answer as the product itself, never as an assistant describing its inputs.
+- Never say "the data you provided", "the sources you gave", "the database", "the chunks" or "your evidence". A player does not know any of that exists.
+- Do not offer "if you want, I can also..." more than once per answer.
+
 You get two kinds of evidence:
 - GAME DATA: rows from Bungie's manifest and the community sheets (AegisRelic, Destiny Data Compendium). Exact stats, tiers, perks, mechanics and damage numbers.
 - WIKI SOURCES: numbered excerpts. Cite these as [1], [2].
@@ -31,7 +36,8 @@ Rules:
 - Never invent a number. If neither data nor sources answer, say so.
 - Never list weapons, armor or perks that do not appear in GAME DATA or the wiki sources, even as "usual picks". If the evidence is missing, say it is missing and stop.
 - If a source is about the original Destiny, say that instead of presenting it as Destiny 2.
-- Mention the update or date when a source is a patch note or announcement.`;
+- Mention the update or date when a source is a patch note or announcement.
+- Only cite sources that actually support a claim you make. If a source was retrieved but is irrelevant, ignore it.`;
 
 export type AnswerSource = {
   index: number;
@@ -41,6 +47,26 @@ export type AnswerSource = {
   sourceName: string;
   score: number;
 };
+
+const SHEET_URLS: Record<string, string> = {
+  AegisRelic: "https://docs.google.com/spreadsheets/d/1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY",
+  "AegisRelic Boss Damage":
+    "https://docs.google.com/spreadsheets/d/1_5wtBjRYHHxuF4oJKDb_iOGZs-wTkzB6RYbnyNLbuz4",
+  "Destiny Data Compendium":
+    "https://docs.google.com/spreadsheets/d/1WaxvbLx7UoSZaBqdFr1u32F2uWVLo-CJunJB4nlGUE4",
+};
+
+function entitySource(kind: string, meta: Record<string, string>): string {
+  if (kind === "recommendation" || kind === "damage_frame") return "AegisRelic";
+  if (kind === "sheet_row") return meta.source ?? "Community sheet";
+  return "Bungie manifest";
+}
+
+function toolUrl(kind: string, meta: Record<string, string>): string {
+  if (kind === "recommendation" || kind === "damage_frame") return SHEET_URLS.AegisRelic!;
+  if (kind === "sheet_row") return SHEET_URLS[meta.source ?? ""] ?? SHEET_URLS.AegisRelic!;
+  return "https://www.bungie.net/7/en/Destiny/NewLight";
+}
 
 export type Answer = {
   answer: string;
@@ -97,11 +123,41 @@ async function currentDataVersion(): Promise<string> {
 export async function answerQuestion(question: string, limit = 5): Promise<Answer> {
   const vector = await embedQuestion(question);
 
-  const [hits, entities, structured] = await Promise.all([
+  const [allHits, entities, structured] = await Promise.all([
     searchGuidesByVector(vector, question, limit),
     searchEntities(vector, 6),
     buildStructuredContext(question),
   ]);
+
+  // Cosine scores are compressed, so an absolute cutoff cannot separate relevant from
+  // accidental. Require a genuinely strong match, or an exact keyword hit, and drop
+  // the whole wiki block when nothing clears the bar.
+  const minSimilarity = Number(process.env.MIN_GUIDE_SIMILARITY ?? 0.55);
+  const bestGuide = allHits.reduce((best, hit) => Math.max(best, hit.vectorScore), 0);
+  const keepGuides = bestGuide >= minSimilarity;
+  const hits = keepGuides
+    ? allHits.filter(
+        (hit) =>
+          hit.vectorScore >= Math.max(minSimilarity, bestGuide - 0.05) ||
+          (hit.keywordRank ?? 99) <= 3,
+      )
+    : [];
+
+  // Same idea for entity matches: keep the head of the distribution only, and drop
+  // kinds the question is not about (a rocket question does not want subclass plugs).
+  const wantsSubclass = /aspect|fragment|subclass|artifact|melee|grenade|super/i.test(question);
+  const wantsActivity = /raid|dungeon|strike|nightfall|lost sector|activity/i.test(question);
+  const relevant = entities.filter((entity) => {
+    if (entity.kind === "subclass_plug" && !wantsSubclass) return false;
+    if (entity.kind === "activity" && !wantsActivity) return false;
+    return true;
+  });
+
+  const bestEntity = relevant.reduce((best, entity) => Math.max(best, entity.score), 0);
+  const keptEntities =
+    bestEntity >= 0.5
+      ? relevant.filter((entity) => entity.score >= bestEntity - 0.04).slice(0, 5)
+      : [];
 
   const entityText = entities
     .map((entity) => `[${entity.kind}] ${entity.name}: ${entity.text}`)
@@ -124,13 +180,23 @@ export async function answerQuestion(question: string, limit = 5): Promise<Answe
   return {
     answer,
     dataVersion: await currentDataVersion(),
-    sources: hits.map((hit, index) => ({
-      index: index + 1,
-      title: hit.title,
-      section: hit.section,
-      url: hit.url,
-      sourceName: hit.sourceName,
-      score: hit.score,
-    })),
+    sources: [
+      ...hits.map((hit, index) => ({
+        index: index + 1,
+        title: hit.title,
+        section: hit.section,
+        url: hit.url,
+        sourceName: hit.sourceName,
+        score: hit.score,
+      })),
+      ...keptEntities.map((entity, index) => ({
+        index: hits.length + index + 1,
+        title: entity.name,
+        section: entity.kind.replace(/_/g, " "),
+        url: toolUrl(entity.kind, entity.meta),
+        sourceName: entitySource(entity.kind, entity.meta),
+        score: entity.score,
+      })),
+    ],
   };
 }
