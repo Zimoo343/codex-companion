@@ -988,7 +988,7 @@ input {
   width: 54px;
   height: 54px;
   padding: 0;
-  background: #dbe6f0;
+  background: var(--send-bg);
   color: #0a0d12;
   border: 0;
   border-radius: var(--radius);
@@ -998,18 +998,30 @@ input {
     opacity 140ms var(--ease);
 }
 
+.send {
+  --send-bg: #dbe6f0;
+}
+
 .send svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+}
+
+/* A folded plane: solid body, with the crease cut in the button's own colour. */
+.send-body {
+  fill: currentColor;
+}
+
+.send-fold {
   fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
+  stroke: var(--send-bg);
+  stroke-width: 1.4;
   stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .send:hover:not(:disabled) {
-  background: #ffffff;
+  --send-bg: #ffffff;
 }
 
 .send:disabled {

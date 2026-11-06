@@ -314,7 +314,8 @@ export default function Home() {
                   <span className="send-pending" />
                 ) : (
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M12 19V5M12 5l-6 6M12 5l6 6" />
+                    <path class="send-body" d="M21 3 3 10.4l7.3 2.5L13 20.8 21 3Z" />
+                    <path class="send-fold" d="M10.3 12.9 21 3" />
                   </svg>
                 )}
               </button>
