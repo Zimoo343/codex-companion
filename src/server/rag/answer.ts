@@ -1,5 +1,5 @@
 import { buildStructuredContext } from "./context.ts";
-import { searchGuides, type GuideHit } from "./search.ts";
+import { embedQuestion, searchEntities, searchGuidesByVector, type GuideHit } from "./search.ts";
 import { createDatabase } from "../db/client.ts";
 
 const baseUrl = (process.env.LLM_BASE_URL ?? "https://opencode.ai/inference/openai/v1").replace(
@@ -95,13 +95,23 @@ async function currentDataVersion(): Promise<string> {
 }
 
 export async function answerQuestion(question: string, limit = 5): Promise<Answer> {
-  const [hits, structured] = await Promise.all([
-    searchGuides(question, limit),
+  const vector = await embedQuestion(question);
+
+  const [hits, entities, structured] = await Promise.all([
+    searchGuidesByVector(vector, question, limit),
+    searchEntities(vector, 6),
     buildStructuredContext(question),
   ]);
 
+  const entityText = entities
+    .map((entity) => `[${entity.kind}] ${entity.name}: ${entity.text}`)
+    .join("\n");
+
   const parts = [
     structured ? `GAME DATA\n\n${structured}` : "",
+    entityText
+      ? `ENTITY DATA (semantic matches across weapons, armor, activities, perks and sheet rows)\n\n${entityText}`
+      : "",
     `WIKI SOURCES\n\n${formatSources(hits)}`,
     `Question: ${question}`,
   ].filter(Boolean);

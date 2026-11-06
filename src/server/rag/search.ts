@@ -60,16 +60,56 @@ const HYBRID_SQL = `
    limit 200
 `;
 
-export async function searchGuides(query: string, limit = 8, maxPerTitle = 2): Promise<GuideHit[]> {
+export async function embedQuestion(query: string): Promise<number[]> {
   const provider = createOpenAiEmbeddings();
   const [vector] = await provider.embed([query]);
   if (!vector) throw new Error("embedding returned no vector");
+  return vector;
+}
 
+export async function searchGuides(query: string, limit = 8, maxPerTitle = 2): Promise<GuideHit[]> {
+  return searchGuidesByVector(await embedQuestion(query), query, limit, maxPerTitle);
+}
+
+export async function searchGuidesByVector(
+  vector: number[],
+  query: string,
+  limit = 8,
+  maxPerTitle = 2,
+): Promise<GuideHit[]> {
   const { pool } = createDatabase();
   try {
     const result = await pool.query<GuideHit & { position: number }>(
       `select * from (${HYBRID_SQL}) ranked where position <= $3 order by score desc limit $2`,
       [toVectorLiteral(vector), limit, maxPerTitle, query],
+    );
+    return result.rows;
+  } finally {
+    await pool.end();
+  }
+}
+
+export type EntityHit = {
+  id: number;
+  kind: string;
+  name: string;
+  text: string;
+  meta: Record<string, string>;
+  score: number;
+};
+
+// Semantic search over every game entity. The returned text is a rendering of the
+// row; the answer still quotes the structured columns behind it.
+export async function searchEntities(vector: number[], limit = 6): Promise<EntityHit[]> {
+  const { pool } = createDatabase();
+  try {
+    const result = await pool.query<EntityHit>(
+      `select id, kind, name, text, meta, (1 - (embedding <=> $1::vector))::float8 as score
+         from entities
+        where embedding is not null
+        order by embedding <=> $1::vector
+        limit $2`,
+      [`[${vector.join(",")}]`, limit],
     );
     return result.rows;
   } finally {

@@ -1,4 +1,5 @@
 import { ingestAnnouncements } from "./ingest-announcements.ts";
+import { ingestEntities } from "./ingest-entities.ts";
 import { ingestWiki } from "./ingest-wiki.ts";
 
 const target = process.argv[2] ?? "announcements";
@@ -17,6 +18,12 @@ if (target === "announcements") {
   console.log(
     `pages ${result.pages}, missing ${result.missing}, chunks ${result.chunks}, ` +
       `embedded ${result.embedded}, skipped ${result.skipped}`,
+  );
+} else if (target === "entities") {
+  const result = await ingestEntities({ dryRun });
+  console.log(
+    `documents ${result.documents}, embedded ${result.embedded}, ` +
+      `unchanged ${result.skipped}, removed ${result.removed}`,
   );
 } else {
   throw new Error(`unknown ingest target: ${target}`);

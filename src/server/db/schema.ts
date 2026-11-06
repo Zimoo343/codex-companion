@@ -205,6 +205,23 @@ export const rateLimits = pgTable(
   (table) => [primaryKey({ columns: [table.ip, table.day] })],
 );
 
+// One embeddable text rendering per game entity: weapon, armor, activity, perk,
+// sheet row. Retrieval finds the row by meaning; the answer quotes the row's columns,
+// so numbers are copied, never paraphrased.
+export const entities = pgTable(
+  "entities",
+  {
+    id: serial("id").primaryKey(),
+    kind: varchar("kind", { length: 40 }).notNull(),
+    name: text("name").notNull(),
+    text: text("text").notNull(),
+    meta: jsonb("meta").$type<Record<string, string>>().notNull().default({}),
+    contentHash: varchar("content_hash", { length: 64 }).notNull().unique(),
+    embedding: vector("embedding", { dimensions: 1536 }),
+  },
+  (table) => [index("entities_kind_idx").on(table.kind), index("entities_name_idx").on(table.name)],
+);
+
 export const corrections = pgTable("corrections", {
   id: serial("id").primaryKey(),
   question: text("question").notNull(),
