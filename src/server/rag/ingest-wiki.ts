@@ -23,10 +23,10 @@ export function wikiUrl(title: string): string {
 // Concept pages first, because a player asking "how do champions work" needs these
 // far more than a specific gun. Then gear and endgame pages from our own data.
 const CONCEPT_PAGES = [
-  // Titles verified against the wiki's search API; guessed names 404.
+  // Mechanics and systems only. Gear opinions come from the community sheets, which
+  // are curated and current; the wiki gear pages are undated and mix Destiny 1 in.
   "Champion",
   "Mods",
-  "Weapon",
   "Weapon Crafting",
   "Elemental damage",
   "Subclass",
@@ -59,12 +59,8 @@ export async function selectSeedPages(limit: number): Promise<string[]> {
 
   await pool.end();
 
-  // Order matters: the limit cuts from the end, and endgame pages are what people
-  // ask about most. Gear comes after activities, weapons last.
+  // Mechanics pages only: gear and activity answers come from the structured tables.
   const names = new Set<string>(CONCEPT_PAGES);
-  for (const row of [...endgame, ...exoticArmor, ...exoticWeapons]) {
-    names.add(row.name.trim());
-  }
 
   return [...names].filter(Boolean).slice(0, limit);
 }

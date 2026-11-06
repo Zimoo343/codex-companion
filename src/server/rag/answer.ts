@@ -13,7 +13,7 @@ const fallbackModel = process.env.LLM_FALLBACK_MODEL;
 const SYSTEM_PROMPT = `You are a Destiny 2 expert answering questions for new and returning players.
 
 You get two kinds of evidence:
-- GAME DATA: rows from Bungie's manifest and AegisRelic's community spreadsheets. Exact stats, tiers, perks and damage numbers.
+- GAME DATA: rows from Bungie's manifest and the community sheets (AegisRelic, Destiny Data Compendium). Exact stats, tiers, perks, mechanics and damage numbers.
 - WIKI SOURCES: numbered excerpts. Cite these as [1], [2].
 
 Rules:

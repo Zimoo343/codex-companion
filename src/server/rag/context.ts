@@ -166,12 +166,37 @@ async function queryEntities(intent: QuestionIntent): Promise<string> {
   }
 }
 
+async function querySheets(intent: QuestionIntent): Promise<string> {
+  const { pool } = createDatabase();
+  try {
+    const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
+    const result = await pool.query(
+      `select source, tab, section, row::text as data
+         from sheet_rows
+        where row::text ilike any($1) or section ilike any($1) or tab ilike any($1)
+        order by case when tab ilike any($1) then 0 else 1 end, length(row::text) desc
+        limit 6`,
+      [patterns],
+    );
+    if (result.rows.length === 0) return "";
+
+    const lines = result.rows.map((entry) => {
+      const where = [entry.source, entry.tab, entry.section].filter(Boolean).join(" / ");
+      return `[${where}] ${entry.data}`;
+    });
+    return `Community sheet rows:\n${lines.join("\n")}`;
+  } finally {
+    await pool.end();
+  }
+}
+
 export async function buildStructuredContext(question: string): Promise<string> {
   const intent = detectIntent(question);
   const heavyOnly = /\b(heavy|power|boss)\b/i.test(question);
   const parts = await Promise.all([
     queryFamilies(intent.families, intent.wantsDamage, heavyOnly),
     queryEntities(intent),
+    querySheets(intent),
   ]);
   return parts.filter(Boolean).join("\n\n");
 }

@@ -43,6 +43,13 @@
       "when": 1793921882886,
       "tag": "0005_lovely_nightshade",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793931068131,
+      "tag": "0006_fat_vengeance",
+      "breakpoints": true
     }
   ]
 }

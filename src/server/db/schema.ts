@@ -151,6 +151,20 @@ export const aegisArchetypes = pgTable(
   ],
 );
 
+// Community sheets that are many small tables stacked per tab: perks, mechanics,
+// boss damage. Stored as rows keyed by the sheet's own headers.
+export const sheetRows = pgTable(
+  "sheet_rows",
+  {
+    id: serial("id").primaryKey(),
+    source: varchar("source", { length: 120 }).notNull(),
+    tab: text("tab").notNull(),
+    section: text("section").notNull().default(""),
+    row: jsonb("row").$type<Record<string, string>>().notNull(),
+  },
+  (table) => [index("sheet_rows_source_tab_idx").on(table.source, table.tab)],
+);
+
 export const externalTools = pgTable("external_tools", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 80 }).notNull().unique(),

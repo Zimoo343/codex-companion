@@ -19,6 +19,28 @@ on the real corpus, not estimates.
 7. **Answer** — the chat model sees the numbered chunks only, must cite `[n]`, and
    must say when the sources do not answer.
 
+## Source pivot (2026-11-05)
+
+The wiki was doing too much. Its gear and activity pages are undated and mix
+Destiny 1 with Destiny 2, which is why a Gjallarhorn question returned a Rise of
+Iron answer while retrieval scored perfectly.
+
+The corpus is now split by job:
+
+- **Structure and numbers**: Bungie manifest plus community sheets — AegisRelic
+  Endgame Analysis, AegisRelic Boss Damage, Destiny Data Compendium (perks, armor
+  perks, subclass abilities, exotic gear, game mechanics).
+- **Prose**: Destinypedia, limited to fourteen mechanics pages (Champion, Mods,
+  Weapon Crafting, Elemental damage, Subclass, Fragment, Raid, Dungeon, Strike,
+  Nightfall, Lost Sector, Artifact, Eververse, Engram).
+
+That cut the wiki from 7,281 chunks to 295 and added 2,555 sheet rows.
+
+The two new sheets are stacked-table layouts: a section title row, a header row,
+then data, repeated per tab. `parseSections()` handles that shape and is unit
+tested. Rows are stored as json keyed by the sheet's own headers, because the
+column sets change upstream between seasons.
+
 ## Eval results
 
 Twenty questions in `evals/questions.json`, scored on retrieval only: did the
@@ -49,6 +71,18 @@ job for the agent in Phase 3, not for the index.
 Cost to embed all of it: about **$0.03**, at $0.02 per million tokens.
 
 ## What the runs taught us
+
+**A curated sheet beats a wiki for facts.** "What does Bait and Switch do" now answers
+with the exact 30% / 10s numbers and the enhanced duration, straight from the Destiny
+Data Compendium, instead of a wiki paragraph that may describe an old sandbox.
+
+**Provenance of sheet rows is not shown in the UI yet.** The sources list only names
+wiki pages, so an answer built from the sheets shows no citation chips. That is a
+presentation gap, not a retrieval one.
+
+**Sheet lookups need tab-level matching.** "Which boss has the highest damage phase"
+matched every tab containing the word boss until the query ordered tab matches first.
+
 
 **Hybrid beats vector alone on exact names.** "What is the duality dungeon" put the
 generic `Dungeon` page first at 0.496 similarity while the `Duality` page sat just

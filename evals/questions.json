@@ -1,82 +1,19 @@
 [
-  {
-    "question": "how do champions work and which mods stun them",
-    "expectedTitle": "Champion"
-  },
-  {
-    "question": "what is an aspect and how many can I equip",
-    "expectedTitle": "Subclass"
-  },
-  {
-    "question": "what does the artifact do each season",
-    "expectedTitle": "Artifact"
-  },
-  {
-    "question": "how does weapon crafting work",
-    "expectedTitle": "Weapon Crafting"
-  },
+  { "question": "how do champions work and which mods stun them", "expectedTitle": "Champion" },
+  { "question": "what do armor mods cost and how do I slot them", "expectedTitle": "Mods" },
+  { "question": "how does weapon crafting work", "expectedTitle": "Weapon Crafting" },
   {
     "question": "what are the different elemental damage types",
     "expectedTitle": "Elemental damage"
   },
-  {
-    "question": "what is a lost sector",
-    "expectedTitle": "Lost Sector"
-  },
-  {
-    "question": "what is the difference between a raid and a dungeon",
-    "expectedTitle": "Dungeon"
-  },
-  {
-    "question": "how do nightfall strikes work",
-    "expectedTitle": "Nightfall"
-  },
-  {
-    "question": "what is the eververse store",
-    "expectedTitle": "Eververse"
-  },
-  {
-    "question": "what do engrams do",
-    "expectedTitle": "Engram"
-  },
-  {
-    "question": "what is the gjallarhorn exotic rocket launcher",
-    "expectedTitle": "Gjallarhorn"
-  },
-  {
-    "question": "tell me about the anarchy grenade launcher",
-    "expectedTitle": "Anarchy"
-  },
-  {
-    "question": "what is the vault of glass raid",
-    "expectedTitle": "Vault of Glass"
-  },
-  {
-    "question": "how does the deep stone crypt raid work",
-    "expectedTitle": "Deep Stone Crypt"
-  },
-  {
-    "question": "what is the duality dungeon",
-    "expectedTitle": "Duality"
-  },
-  {
-    "question": "what is the prophecy dungeon",
-    "expectedTitle": "Prophecy"
-  },
-  {
-    "question": "what is the salvations edge raid",
-    "expectedTitle": "Salvation's Edge"
-  },
-  {
-    "question": "what exotic helmet does a hunter use for survivability",
-    "expectedTitle": "Assassin's Cowl"
-  },
-  {
-    "question": "what does the aeon cult exotic armor do",
-    "expectedTitle": "Aeon"
-  },
-  {
-    "question": "what is the latest destiny 2 community update about",
-    "expectedTitle": "Bungie Community Update"
-  }
+  { "question": "what is an aspect and how many can I equip", "expectedTitle": "Subclass" },
+  { "question": "what does a fragment do", "expectedTitle": "Fragment" },
+  { "question": "what is the difference between a raid and a dungeon", "expectedTitle": "Dungeon" },
+  { "question": "how many people are in a raid", "expectedTitle": "Raid" },
+  { "question": "how do nightfall strikes work", "expectedTitle": "Nightfall" },
+  { "question": "what is a lost sector", "expectedTitle": "Lost Sector" },
+  { "question": "what does the seasonal artifact do", "expectedTitle": "Artifact" },
+  { "question": "what is the eververse store", "expectedTitle": "Eververse" },
+  { "question": "what do engrams do", "expectedTitle": "Engram" },
+  { "question": "what is a strike in destiny 2", "expectedTitle": "Strike" }
 ]
