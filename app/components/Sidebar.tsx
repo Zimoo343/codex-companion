@@ -23,15 +23,21 @@ export function Sidebar({
   onToggle,
 }: SidebarProps) {
   const [dismantling, setDismantling] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
 
-  // Deleting a chat borrows the game's dismantle language: red bar sweeps, then it goes.
+  // Deleting a chat borrows the game's dismantle language: confirm, red bar sweeps, gone.
   function dismantle(id: string) {
     if (dismantling) return;
+    setConfirming(null);
     setDismantling(id);
     window.setTimeout(() => {
       onDelete(id);
       setDismantling(null);
     }, 850);
+  }
+
+  function cancelConfirm() {
+    setConfirming(null);
   }
 
   return (
@@ -58,19 +64,37 @@ export function Sidebar({
               "chat-item",
               session.id === activeId ? "chat-item-active" : "",
               dismantling === session.id ? "chat-item-dismantling" : "",
+              confirming === session.id ? "chat-item-confirming" : "",
             ].join(" ")}
           >
-            <button className="chat-select" onClick={() => onSelect(session.id)}>
-              {session.title || "New chat"}
-            </button>
-            <button
-              className="chat-delete"
-              title="Dismantle chat"
-              onClick={() => dismantle(session.id)}
-              disabled={dismantling === session.id}
-            >
-              {dismantling === session.id ? "DISMANTLING" : "✕"}
-            </button>
+            {confirming === session.id ? (
+              <div className="chat-confirm">
+                <span>Dismantle this chat?</span>
+                <div className="chat-confirm-actions">
+                  <button className="confirm-cancel" onClick={cancelConfirm}>
+                    Keep
+                  </button>
+                  <button className="confirm-danger" onClick={() => dismantle(session.id)}>
+                    Dismantle
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button className="chat-select" onClick={() => onSelect(session.id)}>
+                  {session.title || "New chat"}
+                </button>
+                <button
+                  className="chat-delete"
+                  title="Dismantle chat"
+                  aria-label="Dismantle chat"
+                  onClick={() => setConfirming(session.id)}
+                  disabled={dismantling === session.id}
+                >
+                  {dismantling === session.id ? "DISMANTLING" : "✕"}
+                </button>
+              </>
+            )}
             <span className="dismantle-bar" />
           </div>
         ))}

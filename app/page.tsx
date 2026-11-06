@@ -41,12 +41,48 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
-  const [needsCode, setNeedsCode] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateInput, setGateInput] = useState("");
+  const [gateError, setGateError] = useState("");
+  const [gateChecking, setGateChecking] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => setInviteCode(getInviteCode()), []);
+  // Nothing on the page is usable until the invitation is accepted.
+  useEffect(() => {
+    const stored = getInviteCode();
+    setInviteCode(stored);
+    if (!stored) {
+      setGateOpen(true);
+      return;
+    }
+    void verifyCode(stored, true);
+  }, []);
+
+  async function verifyCode(code: string, silent = false) {
+    setGateChecking(true);
+    if (!silent) setGateError("");
+    try {
+      const response = await fetch("/api/access", { headers: { "x-access-code": code } });
+      const body = (await response.json()) as { ok: boolean; gate: boolean };
+      if (body.ok) {
+        saveInviteCode(code);
+        setInviteCode(code);
+        setGateOpen(false);
+        setGateError("");
+        return;
+      }
+      if (!silent) setGateError("That code does not match.");
+      // A stale stored code must still show the gate, otherwise the page stays locked
+      // with no way in.
+      setGateOpen(true);
+    } catch {
+      if (!silent) setGateError("Could not reach the server.");
+    } finally {
+      setGateChecking(false);
+    }
+  }
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [active?.messages.length, pending]);
@@ -79,9 +115,9 @@ export default function Home() {
       const body = (await response.json()) as AskResponse;
 
       if (response.status === 401) {
-        setNeedsCode(true);
+        setGateOpen(true);
         replaceMessage(session.id, assistantId, {
-          text: "This demo is invite-only. Add the invite code below and ask again.",
+          text: "Access expired. Enter the invite code to continue.",
           error: true,
         });
         return;
@@ -95,7 +131,6 @@ export default function Home() {
         return;
       }
 
-      setNeedsCode(false);
       saveInviteCode(inviteCode);
       replaceMessage(session.id, assistantId, {
         text: body.answer,
@@ -113,116 +148,145 @@ export default function Home() {
   }
 
   return (
-    <div className={`shell${sidebarOpen ? " shell-with-sidebar" : ""}`}>
-      <Sidebar
-        sessions={sessions}
-        activeId={activeId}
-        onSelect={setActiveId}
-        onNew={startNewChat}
-        onDelete={deleteSession}
-        open={sidebarOpen}
-        onToggle={() => setSidebarOpen((open) => !open)}
-      />
-
-      <main className="chat">
-        <header className="chat-head">
-          {!sidebarOpen && (
-            <button
-              className="icon-button"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Show chats"
-            >
-              ☰
-            </button>
-          )}
-          <div>
-            <h1>Codex Companion</h1>
-            <p>Destiny 2 answers, grounded in Bungie data and community spreadsheets.</p>
-          </div>
-        </header>
-
-        <div className="messages">
-          {(!ready || !active || active.messages.length === 0) && (
-            <div className="welcome">
-              <div className="eyebrow">Destiny 2 knowledge</div>
-              <h2>Ask about anything in Destiny 2</h2>
-              <p>
-                Weapons, damage numbers, perks, exotics, aspects, raids and dungeons. Every answer
-                shows where it came from.
-              </p>
-              <div className="samples">
-                {SAMPLE_QUESTIONS.map((sample) => (
-                  <button key={sample} className="sample" onClick={() => send(sample)}>
-                    {sample}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {active?.messages.map((message) => (
-            <Message key={message.id} message={message} />
-          ))}
-
-          {pending && (
-            <div className="message message-assistant">
-              <div className="bubble bubble-assistant typing">
-                <span />
-                <span />
-                <span />
-              </div>
-            </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
-
-        <form
-          className="composer"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void send(input);
-          }}
-        >
-          {needsCode && (
-            <input
-              className="invite"
-              placeholder="Invite code"
-              value={inviteCode}
-              onChange={(event) => setInviteCode(event.target.value)}
-            />
-          )}
-          <div className="composer-row">
-            <textarea
-              ref={textareaRef}
-              rows={2}
-              maxLength={500}
-              placeholder="Ask a Destiny 2 question…"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  void send(input);
-                }
+    <>
+      {gateOpen && (
+        <div className="gate" role="dialog" aria-modal="true" aria-label="Invitation required">
+          <div className="gate-panel">
+            <div className="gate-mark">CODEX</div>
+            <h2>Private preview</h2>
+            <p>
+              This companion is invite-only while it is being tested. Enter the code you were given
+              to continue.
+            </p>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void verifyCode(gateInput || inviteCode);
               }}
-            />
-            <button className="send" type="submit" disabled={pending || !input.trim()}>
-              {pending ? "…" : "Send"}
-            </button>
+            >
+              <input
+                autoFocus
+                className="gate-input"
+                placeholder="Invite code"
+                value={gateInput}
+                onChange={(event) => setGateInput(event.target.value)}
+                spellCheck={false}
+              />
+              <button className="gate-button" type="submit" disabled={gateChecking || !gateInput}>
+                {gateChecking ? "Checking…" : "Enter"}
+              </button>
+            </form>
+            {gateError && <p className="gate-error">{gateError}</p>}
+            <p className="gate-foot">
+              Grounded in Bungie data, AegisRelic and Destiny Data Compendium.
+            </p>
           </div>
-          <div className="composer-foot">
-            <span>
-              Data: Bungie manifest, AegisRelic, Destiny Data Compendium, Destinypedia (CC BY-SA
-              4.0)
-            </span>
-            <span>
-              {active?.messages.at(-1)?.dataVersion
-                ? `manifest ${active.messages.at(-1)?.dataVersion}`
-                : ""}
-            </span>
+        </div>
+      )}
+
+      <div className={`shell${sidebarOpen ? " shell-with-sidebar" : ""}`}>
+        <Sidebar
+          sessions={sessions}
+          activeId={activeId}
+          onSelect={setActiveId}
+          onNew={startNewChat}
+          onDelete={deleteSession}
+          open={sidebarOpen}
+          onToggle={() => setSidebarOpen((open) => !open)}
+        />
+
+        <main className="chat">
+          <header className="chat-head">
+            {!sidebarOpen && (
+              <button
+                className="icon-button"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Show chats"
+              >
+                ☰
+              </button>
+            )}
+            <div>
+              <h1>Codex Companion</h1>
+              <p>Destiny 2 answers, grounded in Bungie data and community spreadsheets.</p>
+            </div>
+          </header>
+
+          <div className="messages">
+            {(!ready || !active || active.messages.length === 0) && (
+              <div className="welcome">
+                <div className="eyebrow">Destiny 2 knowledge</div>
+                <h2>Ask about anything in Destiny 2</h2>
+                <p>
+                  Weapons, damage numbers, perks, exotics, aspects, raids and dungeons. Every answer
+                  shows where it came from.
+                </p>
+                <div className="samples">
+                  {SAMPLE_QUESTIONS.map((sample) => (
+                    <button key={sample} className="sample" onClick={() => send(sample)}>
+                      {sample}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {active?.messages.map((message) => (
+              <Message key={message.id} message={message} />
+            ))}
+
+            {pending && (
+              <div className="message message-assistant">
+                <div className="bubble bubble-assistant typing">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
           </div>
-        </form>
-      </main>
-    </div>
+
+          <form
+            className="composer"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void send(input);
+            }}
+          >
+            <div className="composer-row">
+              <textarea
+                ref={textareaRef}
+                rows={2}
+                maxLength={500}
+                placeholder="Ask a Destiny 2 question…"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void send(input);
+                  }
+                }}
+              />
+              <button className="send" type="submit" disabled={pending || !input.trim()}>
+                {pending ? "…" : "Send"}
+              </button>
+            </div>
+            <div className="composer-foot">
+              <span>
+                Data: Bungie manifest, AegisRelic, Destiny Data Compendium, Destinypedia (CC BY-SA
+                4.0)
+              </span>
+              <span>
+                {active?.messages.at(-1)?.dataVersion
+                  ? `manifest ${active.messages.at(-1)?.dataVersion}`
+                  : ""}
+              </span>
+            </div>
+          </form>
+        </main>
+      </div>
+    </>
   );
 }

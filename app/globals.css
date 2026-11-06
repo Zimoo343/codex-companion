@@ -803,3 +803,162 @@ input {
   text-transform: uppercase;
   color: var(--muted);
 }
+
+/* ---------- invitation gate ---------- */
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, #05070a 82%, transparent);
+  backdrop-filter: blur(14px);
+  animation: gate-in 220ms var(--ease) both;
+}
+
+@keyframes gate-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.gate-panel {
+  width: 100%;
+  max-width: 420px;
+  background: linear-gradient(180deg, rgba(22, 28, 34, 0.96), rgba(12, 16, 20, 0.98));
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 30px 28px 22px;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+.gate-mark {
+  font-family: var(--font-display), sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.gate-panel h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+.gate-panel p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.gate-panel form {
+  display: flex;
+  gap: 8px;
+}
+
+.gate-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 11px 12px;
+  font-size: 14px;
+}
+
+.gate-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim);
+}
+
+.gate-button {
+  background: var(--accent);
+  color: #04140f;
+  border: 0;
+  border-radius: var(--radius);
+  padding: 0 18px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gate-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gate-error {
+  margin: 12px 0 0;
+  color: #ff8a7d;
+  font-size: 12.5px;
+}
+
+.gate-foot {
+  margin: 20px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* confirm before dismantling a chat */
+.chat-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 9px 10px;
+  width: 100%;
+  font-size: 12px;
+  color: #ffd7d1;
+}
+
+.chat-confirm-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.confirm-cancel,
+.confirm-danger {
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.confirm-danger {
+  border-color: rgba(255, 65, 51, 0.5);
+  color: #ff8a7d;
+}
+
+.confirm-danger:hover {
+  background: rgba(255, 65, 51, 0.16);
+  color: #fff;
+}
+
+.chat-item-confirming {
+  background: rgba(255, 65, 51, 0.08);
+  border-color: rgba(255, 65, 51, 0.35);
+}
