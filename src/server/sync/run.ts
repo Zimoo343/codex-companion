@@ -60,11 +60,13 @@ async function syncManifest() {
   console.log(`manifest ${version}: ${(zip.length / 1e6).toFixed(0)}MB downloaded`);
 
   await db.transaction(async (tx) => {
+    await tx.delete(schema.armorSets);
     await tx.delete(schema.weapons);
     await tx.delete(schema.armor);
     await tx.delete(schema.subclassPlugs);
     await tx.delete(schema.activities);
 
+    await insertAll(bundle.armorSets, (chunk) => tx.insert(schema.armorSets).values(chunk));
     await insertAll(bundle.weapons, (chunk) => tx.insert(schema.weapons).values(chunk));
     await insertAll(bundle.armor, (chunk) => tx.insert(schema.armor).values(chunk));
     await insertAll(bundle.plugs, (chunk) =>
@@ -79,6 +81,7 @@ async function syncManifest() {
       detail: {
         weapons: bundle.weapons.length,
         armor: bundle.armor.length,
+        armorSets: bundle.armorSets.length,
         plugs: bundle.plugs.length,
         activities: bundle.activities.length,
         seconds: Math.round((Date.now() - started) / 1000),
@@ -89,7 +92,8 @@ async function syncManifest() {
 
   console.log(
     `weapons ${bundle.weapons.length}, armor ${bundle.armor.length}, ` +
-      `plugs ${bundle.plugs.length}, activities ${bundle.activities.length}`,
+      `sets ${bundle.armorSets.length}, plugs ${bundle.plugs.length}, ` +
+      `activities ${bundle.activities.length}`,
   );
 
   await pool.end();

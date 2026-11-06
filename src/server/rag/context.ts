@@ -353,6 +353,48 @@ async function queryClassItems(
 
 // No source of ours tracks "popular", so an armour question is answered with the
 // actual options for that class, each with its perk text.
+async function queryArmorSets(
+  intent: QuestionIntent,
+): Promise<{ text: string; origins: Origin[] }> {
+  if (!/\barmou?r sets?\b|set bonus|2.?piece|4.?piece/i.test(intent.phrases.join(" "))) {
+    return { text: "", origins: [] };
+  }
+
+  const { pool } = createDatabase();
+  try {
+    const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
+    const named = await pool.query(
+      `select name, bonuses from armor_sets
+        where name ilike any($1)
+        limit 5`,
+      [patterns],
+    );
+
+    const rows =
+      named.rows.length > 0
+        ? named.rows
+        : (await pool.query(`select name, bonuses from armor_sets order by name limit 6`)).rows;
+
+    if (rows.length === 0) return { text: "", origins: [] };
+
+    const lines = rows.map((row) => {
+      const bonuses = (row.bonuses as Array<{ pieces: number; perk: string; description: string }>)
+        .map((bonus) => `${bonus.pieces}pc ${bonus.perk}: ${bonus.description}`)
+        .join(" ");
+      return `${row.name}: ${bonuses}`;
+    });
+
+    return {
+      text: `Armour sets and their bonuses:\n${lines.join("\n")}`,
+      origins: [
+        { title: "Armour sets", sourceName: "Bungie manifest", url: "https://www.bungie.net" },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 async function queryArmorForClass(question: string): Promise<{ text: string; origins: Origin[] }> {
   const namedClass = /\b(hunter|titan|warlock)\b/i.exec(question)?.[1]?.toLowerCase();
   const asksArmor = /\bexotic|armor|helmet|gauntlet|chest|leg|class item\b/i.test(question);
@@ -399,7 +441,8 @@ async function querySheets(intent: QuestionIntent): Promise<{ text: string; orig
       "Class Abilities",
     ];
     const WEAPON_TABS = ["Weapon Perks", "Exotic Weapons"];
-    const excluded = intent.wantsWeapon && !intent.wantsArmor ? ARMOR_TABS : [];
+    const excluded = intent.wantsWeapon && !intent.wantsArmor ? [...ARMOR_TABS] : [];
+    if (intent.phrases.some((phrase) => /\bsets?\b/.test(phrase))) excluded.push("Exotic Armors");
 
     const result = await pool.query(
       `select source, tab, section, row::text as data,
@@ -450,6 +493,7 @@ export async function buildStructuredContext(
     queryExoticWeapons(intent, context),
     queryClassItems(intent, context),
     queryArmorForClass(context),
+    queryArmorSets(intent),
   ]);
 
   const origins: Origin[] = [];

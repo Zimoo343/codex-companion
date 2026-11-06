@@ -41,8 +41,16 @@ type ManifestActivity = {
   blacklisted?: boolean;
 };
 
+export type ArmorSetRow = {
+  hash: string;
+  name: string;
+  pieces: string[];
+  bonuses: Array<{ pieces: number; perk: string; description: string }>;
+};
+
 export type ManifestBundle = {
   version: string;
+  armorSets: ArmorSetRow[];
   weapons: WeaponRow[];
   armor: ArmorRow[];
   plugs: SubclassPlugRow[];
@@ -231,6 +239,49 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
     plugs.push({ name, kind, class: owner ?? "shared", element: element ?? "", description });
   }
 
+  const perkInfo = new Map<number, { name: string; description: string }>();
+  for (const perk of readAll<{
+    hash: number;
+    displayProperties?: { name?: string; description?: string };
+  }>(manifestDb, "DestinySandboxPerkDefinition")) {
+    perkInfo.set(perk.hash, {
+      name: perk.displayProperties?.name ?? "",
+      description: stripHtml(perk.displayProperties?.description),
+    });
+  }
+
+  const armorSets: ArmorSetRow[] = [];
+  for (const set of readAll<{
+    hash: number;
+    displayProperties?: { name?: string };
+    setItems?: number[];
+    setPerks?: Array<{ requiredSetCount: number; sandboxPerkHash: number }>;
+    redacted?: boolean;
+  }>(manifestDb, "DestinyEquipableItemSetDefinition")) {
+    const name = set.displayProperties?.name;
+    if (!name || set.redacted) continue;
+    if (!set.setPerks || set.setPerks.length === 0) continue;
+
+    const pieces = (set.setItems ?? [])
+      .map((hash) => itemsByHash.get(hash)?.displayProperties?.name)
+      .filter((piece): piece is string => Boolean(piece));
+
+    const bonuses = set.setPerks
+      .map((entry) => {
+        const perk = perkInfo.get(entry.sandboxPerkHash);
+        return {
+          pieces: entry.requiredSetCount,
+          perk: perk?.name ?? "",
+          description: perk?.description ?? "",
+        };
+      })
+      .filter((entry) => entry.description.length > 0);
+
+    if (bonuses.length === 0) continue;
+
+    armorSets.push({ hash: String(set.hash), name, pieces, bonuses });
+  }
+
   const typeNames = new Map<number, string>();
   for (const type of readAll<{ hash: number; displayProperties?: { name?: string } }>(
     manifestDb,
@@ -270,6 +321,7 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
 
   return {
     version,
+    armorSets,
     weapons: dedupeWeapons(weapons),
     armor,
     plugs,

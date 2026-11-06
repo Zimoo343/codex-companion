@@ -165,6 +165,23 @@ export const sheetRows = pgTable(
   (table) => [index("sheet_rows_source_tab_idx").on(table.source, table.tab)],
 );
 
+// Armour sets carry 2-piece and 4-piece bonuses, which is what players mean by
+// "what does this set do".
+export const armorSets = pgTable(
+  "armor_sets",
+  {
+    id: serial("id").primaryKey(),
+    hash: varchar("hash", { length: 20 }).notNull().unique(),
+    name: text("name").notNull(),
+    pieces: jsonb("pieces").$type<string[]>().notNull().default([]),
+    bonuses: jsonb("bonuses")
+      .$type<Array<{ pieces: number; perk: string; description: string }>>()
+      .notNull()
+      .default([]),
+  },
+  (table) => [index("armor_sets_name_idx").on(table.name)],
+);
+
 // Exotic class items are two "Spirit of X" perks rolled together, and the community
 // keeps a curated list of the pairings worth chasing.
 export const classItemCombos = pgTable(

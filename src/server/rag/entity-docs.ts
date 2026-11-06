@@ -141,6 +141,20 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
       );
     }
 
+    // Armour sets: the 2-piece and 4-piece bonuses are the thing players ask about.
+    const sets = await pool.query(`select name, pieces, bonuses from armor_sets`);
+    for (const row of sets.rows) {
+      const bonuses = (row.bonuses as Array<{ pieces: number; perk: string; description: string }>)
+        .map((bonus) => `${bonus.pieces} pieces (${bonus.perk}): ${bonus.description}`)
+        .join(" ");
+      push(
+        "armor_set",
+        `${row.name} armor set`,
+        `${row.name} armour set. ${bonuses} Pieces in the set: ${(row.pieces as string[]).join(", ")}.`,
+        { set: row.name },
+      );
+    }
+
     // Exotic class items: one document per known pairing, plus the recommended builds.
     const combos = await pool.query(`select class, trait_one, trait_two from class_item_combos`);
     for (const row of combos.rows) {

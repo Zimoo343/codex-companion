@@ -1,5 +1,6 @@
 import { prepareAnswer } from "../../../src/server/rag/answer.ts";
 import { consumeQuota } from "../../../src/server/rate-limit.ts";
+import { INJECTION_REFUSAL, looksLikeInjection } from "../../../src/server/rag/guard.ts";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -38,6 +39,12 @@ export async function POST(request: Request) {
   }
   if (question.length > 500) {
     return Response.json({ error: "Question is too long." }, { status: 400 });
+  }
+
+  // Refuse instruction-style input before spending a model call, and before it counts
+  // against the daily allowance.
+  if (looksLikeInjection(question)) {
+    return streamedReply(INJECTION_REFUSAL);
   }
 
   const quota = await consumeQuota(clientIp(request));
@@ -142,4 +149,25 @@ async function openStream(messages: Array<{ role: string; content: string }>) {
   }
 
   return last ?? new Response(null, { status: 500 });
+}
+
+function streamedReply(text: string) {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(
+        encoder.encode(line({ type: "meta", sources: [], dataVersion: "unknown" })),
+      );
+      controller.enqueue(encoder.encode(line({ type: "delta", text })));
+      controller.enqueue(encoder.encode(line({ type: "done" })));
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "cache-control": "no-store",
+    },
+  });
 }
