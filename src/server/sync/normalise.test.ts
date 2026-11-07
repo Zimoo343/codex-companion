@@ -20,6 +20,7 @@ const weapon = (name: string, hash: string, perks: string[]): WeaponRow => ({
   ammoType: "Heavy",
   stats: {},
   perks,
+  source: "",
 });
 
 test("collapses difficulty variants of one activity", () => {

@@ -50,6 +50,7 @@ export const weapons = pgTable(
     ammoType: text("ammo_type").notNull().default(""),
     stats: jsonb("stats").$type<Record<string, number>>().notNull().default({}),
     perks: jsonb("perks").$type<string[]>().notNull().default([]),
+    source: text("source").notNull().default(""),
   },
   (table) => [index("weapons_name_idx").on(table.name)],
 );
@@ -65,6 +66,7 @@ export const armor = pgTable(
     stats: jsonb("stats").$type<Record<string, number>>().notNull().default({}),
     perks: jsonb("perks").$type<string[]>().notNull().default([]),
     description: text("description").notNull().default(""),
+    source: text("source").notNull().default(""),
   },
   (table) => [index("armor_class_idx").on(table.class)],
 );
@@ -209,6 +211,19 @@ export const builds = pgTable("builds", {
   aspects: text("aspects").notNull().default(""),
   fragments: text("fragments").notNull().default(""),
   source: text("source").notNull().default("AegisRelic class items"),
+});
+
+// Which expansion owns which raid, dungeon and subclass. Maintained by hand because
+// Bungie's data does not state purchase requirements.
+export const expansions = pgTable("expansions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  free: boolean("free").notNull().default(false),
+  subclasses: jsonb("subclasses").$type<string[]>().notNull().default([]),
+  activities: jsonb("activities").$type<string[]>().notNull().default([]),
+  note: text("note").notNull().default(""),
+  bundle: boolean("bundle").notNull().default(false),
+  includes: jsonb("includes").$type<string[]>().notNull().default([]),
 });
 
 export const externalTools = pgTable("external_tools", {

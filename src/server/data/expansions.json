@@ -1,0 +1,84 @@
+[
+  {
+    "name": "Free to play",
+    "free": true,
+    "subclasses": [],
+    "activities": ["Vault of Glass", "King's Fall", "Onslaught", "Prophecy"],
+    "note": "Core playlist activities, the free raids and the free dungeon."
+  },
+  {
+    "name": "Forsaken Pack",
+    "free": false,
+    "subclasses": [],
+    "activities": ["Last Wish", "The Shattered Throne"],
+    "note": "Also required to buy Forsaken-era exotics from the Exotic Archive."
+  },
+  {
+    "name": "Shadowkeep",
+    "free": false,
+    "subclasses": [],
+    "activities": ["Garden of Salvation", "Pit of Heresy"],
+    "note": ""
+  },
+  {
+    "name": "Beyond Light",
+    "free": false,
+    "subclasses": ["Stasis"],
+    "activities": ["Deep Stone Crypt"],
+    "note": "Stasis is unlocked through the Beyond Light campaign."
+  },
+  {
+    "name": "30th Anniversary Pack",
+    "free": false,
+    "subclasses": [],
+    "activities": ["Grasp of Avarice"],
+    "note": ""
+  },
+  {
+    "name": "The Witch Queen",
+    "free": false,
+    "subclasses": [],
+    "activities": ["Vow of the Disciple", "Spire of the Watcher", "Duality"],
+    "note": "Dungeons from the Witch Queen year require the dungeon key or the pack."
+  },
+  {
+    "name": "Lightfall",
+    "free": false,
+    "subclasses": ["Strand"],
+    "activities": ["Root of Nightmares", "Ghosts of the Deep"],
+    "note": "Strand is unlocked through the Lightfall campaign."
+  },
+  {
+    "name": "The Final Shape",
+    "free": false,
+    "subclasses": ["Prismatic"],
+    "activities": ["Salvation's Edge", "Warlord's Ruin", "Vesper's Host", "Sundered Doctrine"],
+    "note": "Prismatic unlocks during the Final Shape campaign; the dungeons belong to its episodes."
+  },
+  {
+    "name": "Edge of Fate",
+    "free": false,
+    "subclasses": [],
+    "activities": ["The Desert Perpetual", "Equilibrium"],
+    "note": "2026 expansion. Details reviewed from the manifest only; treat with caution."
+  },
+  {
+    "name": "Destiny 2: The Collection",
+    "free": false,
+    "subclasses": [],
+    "activities": [],
+    "note": "One bundle that includes every expansion in the store listing. Discounted, and the price varies by region and changes with sales, so check the store rather than quoting a number.",
+    "bundle": true,
+    "includes": [
+      "Forsaken Pack",
+      "Shadowkeep",
+      "Beyond Light",
+      "30th Anniversary Pack",
+      "The Witch Queen",
+      "Lightfall",
+      "The Final Shape",
+      "Edge of Fate",
+      "Renegades"
+    ]
+  }
+]

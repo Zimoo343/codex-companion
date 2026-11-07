@@ -71,6 +71,27 @@
       "when": 1794007449634,
       "tag": "0009_right_scrambler",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794007871842,
+      "tag": "0010_even_exodus",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794008212413,
+      "tag": "0011_amused_leech",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794009653612,
+      "tag": "0012_quick_skrulls",
+      "breakpoints": true
     }
   ]
 }

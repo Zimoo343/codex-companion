@@ -132,6 +132,16 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
     if (description) weaponPerkDescriptions.set(perk.hash, description);
   }
 
+  const itemSources = new Map<number, string>();
+  for (const collectible of readAll<{ itemHash?: number; sourceString?: string }>(
+    manifestDb,
+    "DestinyCollectibleDefinition",
+  )) {
+    if (collectible.itemHash && collectible.sourceString) {
+      itemSources.set(collectible.itemHash, collectible.sourceString.replace(/^Source:s*/i, ""));
+    }
+  }
+
   const weapons: WeaponRow[] = [];
   for (const item of items) {
     if (item.itemType !== 3) continue;
@@ -160,6 +170,7 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
       ammoType: AMMO_NAMES[item.equippingBlock?.ammoType ?? 0] ?? "",
       stats,
       perks: [...perks],
+      source: itemSources.get(item.hash) ?? "",
     });
   }
 
@@ -207,6 +218,7 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
       stats,
       perks: effectText.slice(0, 3),
       description: stripHtml(item.displayProperties?.description) || effectText[0] || "",
+      source: itemSources.get(item.hash) ?? "",
     });
   }
 

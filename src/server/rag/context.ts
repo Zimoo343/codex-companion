@@ -111,7 +111,7 @@ async function queryEntities(intent: QuestionIntent): Promise<{ text: string; or
     const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
 
     const weapons = await pool.query(
-      `select name, type, tier, damage_type, ammo_type, stats
+      `select name, type, tier, damage_type, ammo_type, stats, source
          from weapons
         where name ilike any($1)
         limit 5`,
@@ -141,7 +141,7 @@ async function queryEntities(intent: QuestionIntent): Promise<{ text: string; or
 
       const armor = namedClass
         ? await pool.query(
-            `select name, slot, class, description, perks
+            `select name, slot, class, description, perks, source
                from armor
               where lower(class) = $1
                 and description ~* '(heal|health|invisib|damage reduction|overshield|resist|restore)'
@@ -353,6 +353,45 @@ async function queryClassItems(
 
 // No source of ours tracks "popular", so an armour question is answered with the
 // actual options for that class, each with its perk text.
+async function queryExpansions(question: string): Promise<{ text: string; origins: Origin[] }> {
+  if (!/\bdlc|expansions?\b|\bbuy\b|purchase|free to play|free\b|\bown\b|require/i.test(question)) {
+    return { text: "", origins: [] };
+  }
+
+  const { pool } = createDatabase();
+  try {
+    const result = await pool.query(
+      `select name, free, subclasses, activities, bundle, includes from expansions order by bundle, id`,
+    );
+    if (result.rows.length === 0) return { text: "", origins: [] };
+
+    const lines = result.rows.map((row) => {
+      const activities = (row.activities as string[]).join(", ");
+      const subclasses = (row.subclasses as string[]).join(", ");
+
+      if (row.bundle) {
+        const includes = (row.includes as string[]).join(", ");
+        return `${row.name} (bundle): includes ${includes || "every expansion"}`;
+      }
+
+      return `${row.name} (${row.free ? "free" : "paid"}): ${activities || "no activities listed"}${subclasses ? `; subclass ${subclasses}` : ""}`;
+    });
+
+    return {
+      text: `Expansions and what they own (maintained by hand, reviewed 2026-11-05):\n${lines.join("\n")}`,
+      origins: [
+        {
+          title: "Expansions",
+          sourceName: "Maintained notes",
+          url: "https://www.bungie.net/7/en/Destiny",
+        },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 async function queryArmorSets(
   intent: QuestionIntent,
 ): Promise<{ text: string; origins: Origin[] }> {
@@ -477,6 +516,71 @@ async function querySheets(intent: QuestionIntent): Promise<{ text: string; orig
   }
 }
 
+// Resolve "which pack owns this item" in code. Letting the model match a Source line
+// against the expansion list produced confident nonsense (Ice Breaker -> Duality).
+async function queryAcquisition(question: string): Promise<{ text: string; origins: Origin[] }> {
+  const { pool } = createDatabase();
+  try {
+    const items = await pool.query<{ name: string; source: string }>(
+      `select name, source from weapons
+        where length(name) > 3 and position(lower(name) in lower($1)) > 0 and source <> ''
+        union all
+       select name, source from armor
+        where length(name) > 3 and position(lower(name) in lower($1)) > 0 and source <> ''
+        limit 4`,
+      [question],
+    );
+
+    const lines: string[] = [];
+
+    for (const item of items.rows) {
+      const match = await pool.query<{ name: string; free: boolean }>(
+        `select e.name, e.free
+           from expansions e, jsonb_array_elements_text(e.activities) as activity
+          where $1 ilike '%' || activity || '%'
+          limit 1`,
+        [item.source],
+      );
+      const expansion = match.rows[0];
+      lines.push(
+        `${item.name}: source is "${item.source}"${
+          expansion
+            ? `, which belongs to ${expansion.name} (${expansion.free ? "free" : "paid"})`
+            : ", which is not in the expansion list, so the purchase requirement is unknown"
+        }.`,
+      );
+    }
+
+    // A question can name the activity directly, with no item in it.
+    if (lines.length === 0) {
+      for (const expansion of await pool
+        .query<{ name: string; free: boolean }>(`select name, free from expansions`)
+        .then((result) => result.rows)) {
+        if (question.toLowerCase().includes(expansion.name.toLowerCase())) {
+          lines.push(
+            `${expansion.name} is ${expansion.free ? "free to play" : "a paid expansion"}.`,
+          );
+        }
+      }
+    }
+
+    if (lines.length === 0) return { text: "", origins: [] };
+
+    return {
+      text: `Acquisition:\n${lines.join("\n")}`,
+      origins: [
+        {
+          title: "Expansions",
+          sourceName: "Maintained notes",
+          url: "https://www.bungie.net/7/en/Destiny",
+        },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 export async function buildStructuredContext(
   question: string,
   history = "",
@@ -494,6 +598,8 @@ export async function buildStructuredContext(
     queryClassItems(intent, context),
     queryArmorForClass(context),
     queryArmorSets(intent),
+    queryExpansions(context),
+    queryAcquisition(context),
   ]);
 
   const origins: Origin[] = [];

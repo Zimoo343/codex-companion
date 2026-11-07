@@ -34,7 +34,7 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
 
   try {
     const weapons = await pool.query(
-      `select name, type, tier, damage_type, ammo_type, frame, stats, perks
+      `select name, type, tier, damage_type, ammo_type, frame, stats, perks, source
          from weapons`,
     );
     for (const row of weapons.rows) {
@@ -51,12 +51,15 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
           row.frame && row.frame !== row.type ? `Archetype: ${row.frame}.` : "",
           stats ? `Stats: ${stats}.` : "",
           perks ? `Possible perks include ${perks}.` : "",
+          row.source ? `Source: ${row.source}.` : "",
         ]),
         { type: row.type, tier: row.tier },
       );
     }
 
-    const armor = await pool.query(`select name, slot, class, description, perks from armor`);
+    const armor = await pool.query(
+      `select name, slot, class, description, perks, source from armor`,
+    );
     for (const row of armor.rows) {
       push(
         "armor",
@@ -65,6 +68,7 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
           `${row.name} is an Exotic ${row.slot} for ${row.class}.`,
           row.description,
           Array.isArray(row.perks) ? (row.perks as string[]).join(" ") : "",
+          row.source ? `Source: ${row.source}.` : "",
         ]),
         { slot: row.slot, class: row.class },
       );
@@ -138,6 +142,26 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
           row.notes,
         ]),
         { ammo: row.ammo, tier: row.tier },
+      );
+    }
+
+    // Expansions: which pack owns which activities and subclass.
+    const expansions = await pool.query(
+      `select name, free, subclasses, activities, note from expansions order by id`,
+    );
+    for (const row of expansions.rows) {
+      const activities = (row.activities as string[]) ?? [];
+      const subclasses = (row.subclasses as string[]) ?? [];
+      push(
+        "expansion",
+        row.name,
+        sentence([
+          `${row.name} is a ${row.free ? "free" : "paid"} Destiny 2 release.`,
+          subclasses.length > 0 ? `Unlocks the ${subclasses.join(", ")} subclass.` : "",
+          activities.length > 0 ? `Includes or owns: ${activities.join(", ")}.` : "",
+          row.note,
+        ]),
+        { expansion: row.name, free: String(row.free) },
       );
     }
 

@@ -14,6 +14,7 @@ import {
   type AegisWeaponRow,
 } from "./sheets.ts";
 import externalTools from "./external-tools.json" with { type: "json" };
+import expansions from "../data/expansions.json" with { type: "json" };
 import { syncCommunitySheets } from "./sheets-extra.ts";
 import { ingestClassItemSheet } from "./sheets-classitems.ts";
 
@@ -145,6 +146,8 @@ async function seedReferenceData() {
   const { db, pool } = createDatabase();
 
   await db.transaction(async (tx) => {
+    await tx.delete(schema.expansions);
+    await tx.insert(schema.expansions).values(expansions);
     await tx.delete(schema.externalTools);
     await tx.insert(schema.externalTools).values(externalTools);
 

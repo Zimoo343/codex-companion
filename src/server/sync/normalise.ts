@@ -11,6 +11,7 @@ export type WeaponRow = {
   ammoType: string;
   stats: Record<string, number>;
   perks: string[];
+  source: string;
 };
 
 export type ArmorRow = {
@@ -21,6 +22,7 @@ export type ArmorRow = {
   stats: Record<string, number>;
   perks: string[];
   description: string;
+  source: string;
 };
 
 export type SubclassPlugRow = {
