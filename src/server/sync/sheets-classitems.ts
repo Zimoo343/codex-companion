@@ -7,6 +7,10 @@ const SOURCE = "AegisRelic class items";
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}`;
 const CLASSES = ["Warlock", "Hunter", "Titan"];
 
+// Each build block is 11 columns wide; the label sits in the first 4 cells and the
+// values start 4 columns after the block start.
+const BLOCKS = [0, 11, 22];
+
 async function fetchTab(tab: string): Promise<string[][]> {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
   const response = await fetch(url);
@@ -14,7 +18,6 @@ async function fetchTab(tab: string): Promise<string[][]> {
   return parseCsv(await response.text());
 }
 
-// The checklist repeats one 4-column block per class: Trait One, Trait Two, Have it?, Got it on...
 export function parseChecklist(
   rows: string[][],
 ): Array<{ class: string; traitOne: string; traitTwo: string }> {
@@ -33,7 +36,7 @@ export function parseChecklist(
   return combos;
 }
 
-type BuildRow = {
+type Build = {
   class: string;
   rank: number;
   exoticCombo: string;
@@ -43,35 +46,30 @@ type BuildRow = {
   fragments: string;
 };
 
-// Builds are laid out as three blocks of eleven columns, one block per build, under a
-// "X Builds" heading.
-export function parseBuilds(rows: string[][]): BuildRow[] {
-  const builds: BuildRow[] = [];
+// A block owns 11 columns. The label is the first non-empty cell in the first five,
+// and everything non-empty after it (inside the block) belongs to that label.
+function readBlock(row: string[], offset: number): { label: string; values: string[] } {
+  const block = row.slice(offset, offset + 10).map((cell) => cell.trim());
+  const labelIndex = block.findIndex((cell) => cell.length > 0);
+  if (labelIndex === -1) return { label: "", values: [] };
+
+  const values = block
+    .slice(labelIndex + 1)
+    .filter((cell) => cell.length > 0 && !/^or$/i.test(cell) && !/^recommended /i.test(cell));
+
+  return { label: block[labelIndex]!.toLowerCase().replace(/:$/, ""), values };
+}
+
+export function parseBuilds(rows: string[][]): Build[] {
+  const builds = new Map<string, Build>();
   let currentClass = "";
+  let currentField: keyof Omit<Build, "class" | "rank"> | null = null;
 
-  const valueAfter = (row: string[], start: number, span = 6) =>
-    row
-      .slice(start + 1, start + 1 + span)
-      .map((cell) => cell.trim())
-      .filter(Boolean);
-
-  for (const row of rows) {
-    const first = (row[0] ?? "").trim();
-    const classHeading = /^(warlock|hunter|titan) builds$/i.exec(first);
-    if (classHeading) {
-      currentClass = classHeading[1]!.replace(/^./, (c) => c.toUpperCase());
-      continue;
-    }
-    if (!currentClass) continue;
-
-    for (const [block, offset] of [0, 11, 22].entries()) {
-      const label = (row[offset] ?? "").trim();
-      if (!/^build \d/i.test(label)) continue;
-
-      // Rows are stacked vertically, so collect by scanning forward from the label is
-      // unnecessary: each row is one field, and the build number comes from the label.
-      const rank = Number(label.replace(/\D+/g, "")) || block + 1;
-      builds.push({
+  const slot = (rank: number) => {
+    const key = `${currentClass}-${rank}`;
+    let build = builds.get(key);
+    if (!build) {
+      build = {
         class: currentClass,
         rank,
         exoticCombo: "",
@@ -79,52 +77,74 @@ export function parseBuilds(rows: string[][]): BuildRow[] {
         abilities: "",
         aspects: "",
         fragments: "",
-      });
+      };
+      builds.set(key, build);
     }
-  }
+    return build;
+  };
 
-  // Second pass: fill fields by matching row labels against the build blocks.
   for (const row of rows) {
-    const classHeading = /^(warlock|hunter|titan) builds$/i.exec((row[0] ?? "").trim());
-    if (classHeading) {
-      currentClass = classHeading[1]!.replace(/^./, (c) => c.toUpperCase());
+    const first = (row[0] ?? "").trim();
+    const heading = /^(warlock|hunter|titan) builds$/i.exec(first);
+    if (heading) {
+      currentClass = heading[1]!.replace(/^./, (character) => character.toUpperCase());
+      currentField = null;
       continue;
     }
     if (!currentClass) continue;
 
-    for (const [block, offset] of [0, 11, 22].entries()) {
-      const target = builds.find(
-        (build) => build.class === currentClass && build.rank === block + 1,
-      );
-      if (!target) continue;
+    for (const [block, offset] of BLOCKS.entries()) {
+      const rank = block + 1;
+      const { label, values } = readBlock(row, offset);
 
-      // Labels live in the first column of a block; values follow in the same row.
-      const label = (row[offset] ?? "").trim().toLowerCase();
-      const values = valueAfter(row, offset + 1 === offset ? offset : offset + 1);
-      if (!label) {
-        // Continuation rows: fragments stack vertically, so append them.
-        if (values.length > 0 && target.fragments && /^facet of/i.test(values[0] ?? "")) {
-          target.fragments = `${target.fragments}, ${values.join(", ")}`;
-        }
+      // Continuation rows have no label: the first cell is already a fragment name.
+      if (/^facet of/i.test(label)) {
+        const build = slot(rank);
+        const normalise = (value: string) =>
+          value
+            .replace(/^facet of\s+/i, "Facet of ")
+            .replace(/\b([a-z])([a-z]*)/gi, (_, first: string, rest: string) =>
+              /^of$/i.test(first + rest) ? "of" : first.toUpperCase() + rest.toLowerCase(),
+            );
+        const extra = [label, ...values].filter((value) => /^facet of/i.test(value)).map(normalise);
+        build.fragments = [build.fragments, ...extra].filter(Boolean).join(", ");
+        currentField = "fragments";
         continue;
       }
+
       if (label.startsWith("recommended exotic combo")) {
-        target.exoticCombo = values.slice(0, 2).join(" + ");
+        slot(rank).exoticCombo = values.slice(0, 2).join(" + ");
+        currentField = "exoticCombo";
       } else if (label.startsWith("recommended super")) {
-        target.super = values[0] ?? "";
+        slot(rank).super = values.join(" or ");
+        currentField = "super";
       } else if (label.startsWith("recommended abilities")) {
-        target.abilities = values.join(", ");
+        currentField = "abilities";
       } else if (label.startsWith("recommended aspects")) {
-        target.aspects = values.join(", ");
+        slot(rank).aspects = values.join(", ");
+        currentField = "aspects";
       } else if (label.startsWith("recommended fragments")) {
-        target.fragments = values.join(", ");
-      } else if (/^(melee ability|grenade|class ability)/.test(label)) {
-        target.abilities = [target.abilities, ...values].filter(Boolean).join(", ");
+        slot(rank).fragments = values.filter((value) => /^facet of/i.test(value)).join(", ");
+        currentField = "fragments";
+      } else if (/^(class ability|melee ability|grenade)$/.test(label)) {
+        const build = slot(rank);
+        const entry = `${label}: ${values.join(" or ")}`;
+        build.abilities = build.abilities ? `${build.abilities}; ${entry}` : entry;
+        currentField = "abilities";
+      } else if (!label && values.length > 0) {
+        // Continuation rows: more aspects or fragments for the block above.
+        const build = slot(rank);
+        const facets = values.filter((value) => /^facet of/i.test(value));
+        if (currentField === "fragments" && facets.length > 0) {
+          build.fragments = [build.fragments, ...facets].filter(Boolean).join(", ");
+        } else if (currentField === "aspects" && facets.length === 0) {
+          build.aspects = [build.aspects, ...values].filter(Boolean).join(", ");
+        }
       }
     }
   }
 
-  return builds.filter((build) => build.exoticCombo.length > 0);
+  return [...builds.values()].filter((build) => build.exoticCombo.length > 0);
 }
 
 export async function ingestClassItemSheet() {
@@ -145,7 +165,9 @@ export async function ingestClassItemSheet() {
     }
 
     if (builds.length > 0) {
-      await tx.insert(schema.builds).values(builds.map((build) => ({ ...build, source: SOURCE })));
+      await tx
+        .insert(schema.builds)
+        .values(builds.map((build) => ({ ...build, source: SOURCE, sourceUrl: SHEET_URL })));
     }
 
     await tx

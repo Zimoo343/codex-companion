@@ -17,6 +17,7 @@ import externalTools from "./external-tools.json" with { type: "json" };
 import expansions from "../data/expansions.json" with { type: "json" };
 import { syncCommunitySheets } from "./sheets-extra.ts";
 import { ingestClassItemSheet } from "./sheets-classitems.ts";
+import { ingestBlueberriesBuilds } from "./builds-blueberries.ts";
 
 const CHUNK = 200;
 
@@ -191,5 +192,9 @@ if (target === "all" || target === "community") {
 if (target === "all" || target === "classitems") {
   const result = await ingestClassItemSheet();
   console.log(`class_item_combos ${result.combos}, builds ${result.builds}`);
+}
+if (target === "all" || target === "builds") {
+  const result = await ingestBlueberriesBuilds();
+  console.log(`community_builds ${result.builds} from ${result.pages} pages`);
 }
 if (target === "all" || target === "reference") await seedReferenceData();

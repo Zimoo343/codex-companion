@@ -49,6 +49,9 @@ Rules:
 - If the GAME DATA contains an "Acquisition:" block, use those sentences verbatim. Do not work out pack ownership yourself.
 - A bundle in the expansion list is an option, not a requirement. Mention it only when the question is about buying everything, and never quote a price.
 - If that source line names a destination, activity, quest or expansion, say so. If it does not (for example "Exotic Archive at the Tower"), do not invent which pack is required; say the data gives the current location but not the purchase requirement.
+- For a build question, describe it by subclass, class and exotic ("a Prismatic Warlock build with Getaway Artist"). Sources invent their own names; mention that name only in parentheses, never as the primary label, because most of the community does not name builds.
+- Then give aspects, fragments, abilities and stat priority. Do not repeat the build label twice in the opening sentence.
+- Published builds are extracted from a guide, not measured usage. Credit the source and its author, and say when a build lists a required expansion.
 - Nothing in the data tracks popularity or usage. If asked for a "popular" exotic, say there is no usage data and list what the options do instead of crowning one.
 - "Spirit of X" perks belong only to exotic class items. Never present one as the standalone exotic with a similar name (Spirit of the Inmost Light is not Heart of Inmost Light), and never present a class-item perk as that class's armour exotic.
 - Mention the update or date when a source is a patch note or announcement.
@@ -74,11 +77,15 @@ const SHEET_URLS: Record<string, string> = {
 function entitySource(kind: string, meta: Record<string, string>): string {
   if (kind === "recommendation" || kind === "damage_frame") return "AegisRelic";
   if (kind === "class_item_combo" || kind === "build") return "AegisRelic class items";
+  if (kind === "community_build") return "Blueberries.gg";
   if (kind === "sheet_row") return meta.source ?? "Community sheet";
   return "Bungie manifest";
 }
 
 function toolUrl(kind: string, meta: Record<string, string>): string {
+  if (kind === "community_build") {
+    return meta.sourceUrl ?? "https://www.blueberries.gg/armor/best-destiny-2-builds/";
+  }
   if (kind === "class_item_combo" || kind === "build") {
     return "https://docs.google.com/spreadsheets/d/1-pvCrjb9QLEwvQn0YquCxvZzMh25gMIh4ZrNe1DdAsY";
   }

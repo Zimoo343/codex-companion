@@ -16,7 +16,10 @@ const ENTITIES: Record<string, string> = {
 };
 
 export function decodeEntities(text: string): string {
-  return text.replace(/&[a-z#0-9]+;/gi, (entity) => ENTITIES[entity.toLowerCase()] ?? entity);
+  return text
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCodePoint(parseInt(code, 16)))
+    .replace(/&[a-z][a-z0-9]*;/gi, (entity) => ENTITIES[entity.toLowerCase()] ?? entity);
 }
 
 // Announces heading boundaries so sections can be cut before tags are stripped.
@@ -59,12 +62,17 @@ export function markupToMarkedText(markup: string): string {
 }
 
 export function collapseWhitespace(text: string): string {
-  return decodeEntities(text)
-    .replace(/\r/g, "")
-    .replace(/[ \t]+/g, " ")
-    .replace(/ *\n */g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return (
+    decodeEntities(text)
+      // Wiki HTML is partly double-escaped, so decoding can reveal tags that the
+      // earlier strip never saw. Remove whatever appears after decoding.
+      .replace(/<\/?[a-z][^>]*>/gi, " ")
+      .replace(/\r/g, "")
+      .replace(/[ \t]+/g, " ")
+      .replace(/ *\n */g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
 }
 
 export function splitIntoSections(markup: string): Section[] {

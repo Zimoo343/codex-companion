@@ -325,8 +325,8 @@ export default function Home() {
             </div>
             <div className="composer-foot">
               <span>
-                Data: Bungie manifest, AegisRelic, Destiny Data Compendium, Destinypedia (CC BY-SA
-                4.0)
+                Data: Bungie manifest, AegisRelic, Destiny Data Compendium, Blueberries.gg,
+                Destinypedia (CC BY-SA 4.0)
               </span>
               <span>
                 {active?.messages.at(-1)?.dataVersion

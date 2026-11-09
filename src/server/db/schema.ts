@@ -211,6 +211,7 @@ export const builds = pgTable("builds", {
   aspects: text("aspects").notNull().default(""),
   fragments: text("fragments").notNull().default(""),
   source: text("source").notNull().default("AegisRelic class items"),
+  sourceUrl: text("source_url").notNull().default(""),
 });
 
 // Which expansion owns which raid, dungeon and subclass. Maintained by hand because
@@ -225,6 +226,31 @@ export const expansions = pgTable("expansions", {
   bundle: boolean("bundle").notNull().default(false),
   includes: jsonb("includes").$type<string[]>().notNull().default([]),
 });
+
+// Community builds, extracted as facts from published guides with attribution.
+export const communityBuilds = pgTable(
+  "community_builds",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    class: text("class").notNull().default(""),
+    subclass: text("subclass").notNull().default(""),
+    exotics: jsonb("exotics").$type<string[]>().notNull().default([]),
+    slot: text("slot").notNull().default(""),
+    acquisition: text("acquisition").notNull().default(""),
+    requires: text("requires").notNull().default(""),
+    aspects: jsonb("aspects").$type<string[]>().notNull().default([]),
+    fragments: jsonb("fragments").$type<string[]>().notNull().default([]),
+    abilities: jsonb("abilities").$type<string[]>().notNull().default([]),
+    stats: text("stats").notNull().default(""),
+    mods: text("mods").notNull().default(""),
+    source: text("source").notNull().default(""),
+    sourceUrl: text("source_url").notNull().default(""),
+    author: text("author").notNull().default(""),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("community_builds_class_idx").on(table.class, table.subclass)],
+);
 
 export const externalTools = pgTable("external_tools", {
   id: serial("id").primaryKey(),

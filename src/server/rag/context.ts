@@ -392,6 +392,54 @@ async function queryExpansions(question: string): Promise<{ text: string; origin
   }
 }
 
+// Community builds: published compositions, cited to the guide that lists them.
+async function queryCommunityBuilds(
+  question: string,
+): Promise<{ text: string; origins: Origin[] }> {
+  const wantsBuild = /\bbuilds?\b|loadout|aspects?|fragments?/i.test(question);
+  if (!wantsBuild) return { text: "", origins: [] };
+
+  const namedClass = /\b(hunter|titan|warlock)\b/i.exec(question)?.[1]?.toLowerCase();
+  const subclasses = ["prismatic", "solar", "arc", "void", "stasis", "strand"].filter((name) =>
+    question.toLowerCase().includes(name),
+  );
+
+  const { pool } = createDatabase();
+  try {
+    const result = await pool.query(
+      `select name, class, subclass, exotics, aspects, fragments, abilities, stats, requires, source, source_url
+         from community_builds
+        where ($1::text is null or lower(class) = $1)
+          and (cardinality($2::text[]) = 0 or lower(subclass) = any($2))
+        order by random()
+        limit 5`,
+      [namedClass ?? null, subclasses],
+    );
+    if (result.rows.length === 0) return { text: "", origins: [] };
+
+    const lines = result.rows.map((row) => {
+      const exotics = (row.exotics as string[]).join(" + ");
+      const aspects = (row.aspects as string[]).join(", ");
+      const fragments = (row.fragments as string[]).join(", ");
+      const abilities = (row.abilities as string[]).join(", ");
+      return `${row.subclass} ${row.class} with ${exotics} (listed by ${row.source} as "${row.name}"): aspects ${aspects}; fragments ${fragments}; abilities ${abilities}; stat priority ${row.stats}; requires ${row.requires}`;
+    });
+
+    return {
+      text: `Published community builds:\n${lines.join("\n")}`,
+      origins: [
+        {
+          title: "Best Destiny 2 Builds",
+          sourceName: "Blueberries.gg",
+          url: "https://www.blueberries.gg/armor/best-destiny-2-builds/",
+        },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 async function queryArmorSets(
   intent: QuestionIntent,
 ): Promise<{ text: string; origins: Origin[] }> {
@@ -598,6 +646,7 @@ export async function buildStructuredContext(
     queryClassItems(intent, context),
     queryArmorForClass(context),
     queryArmorSets(intent),
+    queryCommunityBuilds(context),
     queryExpansions(context),
     queryAcquisition(context),
   ]);

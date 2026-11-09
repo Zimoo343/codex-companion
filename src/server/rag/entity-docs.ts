@@ -145,6 +145,20 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
       );
     }
 
+    // Community builds, as published by Blueberries.gg with attribution.
+    const community = await pool.query(
+      `select name, class, subclass, exotics, aspects, fragments, abilities, stats, requires, source, source_url from community_builds`,
+    );
+    for (const row of community.rows) {
+      const exotics = (row.exotics as string[]).join(" + ");
+      push(
+        "community_build",
+        `${row.subclass} ${row.class} build with ${exotics}`,
+        `A ${row.subclass} ${row.class} build built around ${exotics}. Aspects: ${(row.aspects as string[]).join(", ")}. Fragments: ${(row.fragments as string[]).join(", ")}. Abilities: ${(row.abilities as string[]).join(", ")}. Stat priority: ${row.stats}. Requires ${row.requires}. ${row.source} lists this one as "${row.name}".`,
+        { class: row.class, subclass: row.subclass, source: row.source, sourceUrl: row.source_url },
+      );
+    }
+
     // Expansions: which pack owns which activities and subclass.
     const expansions = await pool.query(
       `select name, free, subclasses, activities, note from expansions order by id`,

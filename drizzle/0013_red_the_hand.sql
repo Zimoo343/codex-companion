@@ -1,0 +1,1 @@
+ALTER TABLE "builds" ADD COLUMN "source_url" text DEFAULT '' NOT NULL;

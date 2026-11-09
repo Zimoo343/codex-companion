@@ -281,6 +281,16 @@ export function Sidebar({
                   <span>Perk text, armour perks, class abilities, game mechanics</span>
                 </li>
                 <li>
+                  <a
+                    href="https://www.blueberries.gg/armor/best-destiny-2-builds/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Blueberries.gg
+                  </a>
+                  <span>Published builds by Ric Molina, extracted as facts</span>
+                </li>
+                <li>
                   <a href="https://www.destinypedia.com" target="_blank" rel="noreferrer">
                     Destinypedia
                   </a>

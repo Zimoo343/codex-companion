@@ -92,6 +92,20 @@
       "when": 1794009653612,
       "tag": "0012_quick_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794253377205,
+      "tag": "0013_red_the_hand",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794256416025,
+      "tag": "0014_sour_christian_walker",
+      "breakpoints": true
     }
   ]
 }
