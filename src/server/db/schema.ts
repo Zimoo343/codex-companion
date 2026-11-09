@@ -51,6 +51,7 @@ export const weapons = pgTable(
     stats: jsonb("stats").$type<Record<string, number>>().notNull().default({}),
     perks: jsonb("perks").$type<string[]>().notNull().default([]),
     source: text("source").notNull().default(""),
+    access: text("access").notNull().default(""),
   },
   (table) => [index("weapons_name_idx").on(table.name)],
 );
@@ -67,6 +68,7 @@ export const armor = pgTable(
     perks: jsonb("perks").$type<string[]>().notNull().default([]),
     description: text("description").notNull().default(""),
     source: text("source").notNull().default(""),
+    access: text("access").notNull().default(""),
   },
   (table) => [index("armor_class_idx").on(table.class)],
 );

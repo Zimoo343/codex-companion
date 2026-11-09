@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { sanitizeAnswer } from "../../src/lib/answer-text.ts";
 import type { ChatMessage } from "../chat-store";
 
 function Sources({ message, id }: { message: ChatMessage; id: string }) {
@@ -61,7 +62,7 @@ export function Message({ message }: { message: ChatMessage }) {
             ),
           }}
         >
-          {message.text}
+          {sanitizeAnswer(message.text)}
         </ReactMarkdown>
 
         {sourceCount > 0 && (

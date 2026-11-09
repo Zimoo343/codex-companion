@@ -2,7 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { createDatabase } from "../db/client.ts";
 import * as schema from "../db/schema.ts";
 import { buildManifestBundle, extractZipEntry, fetchManifest } from "./manifest.ts";
@@ -76,6 +76,11 @@ async function syncManifest() {
     );
     await insertAll(bundle.activities, (chunk) => tx.insert(schema.activities).values(chunk));
 
+    // Accessibility, derived from where each item drops. A new player asks "can I get
+    // this", which is a different axis to tier.
+    await tx.execute(accessStatement("weapons"));
+    await tx.execute(accessStatement("armor"));
+
     await tx.insert(schema.syncRuns).values({
       kind: "manifest",
       version,
@@ -99,6 +104,21 @@ async function syncManifest() {
   );
 
   await pool.end();
+}
+
+export function accessStatement(table: "weapons" | "armor") {
+  return sql.raw(`
+    update ${table} set access = case
+      when source ilike '%exotic archive%' then 'archive'
+      when source ~* '(festival of the lost|dawning|solstice|guardian games|crimson days|revelry|iron banner)' then 'event'
+      when exists (select 1 from activities a where a.type = 'Raid' and ${table}.source ilike '%' || a.name || '%') then 'raid'
+      when exists (select 1 from activities a where a.type = 'Dungeon' and ${table}.source ilike '%' || a.name || '%') then 'dungeon'
+      when source ~* '(forsaken|shadowkeep|beyond light|witch queen|lightfall|final shape|edge of fate|renegades|30th anniversary)' then 'expansion'
+      when source ~* 'season of|episode' then 'seasonal'
+      when source ~* '(vanguard|crucible|gambit|onslaught|nightfall|lost sector|lost sectors|strike|strikes|world drop|engram|destination|vendor|dares|monument|collections)' then 'free'
+      else 'unknown'
+    end
+  `);
 }
 
 async function syncSheets() {
@@ -125,6 +145,15 @@ async function syncSheets() {
 
     await insertAll(weapons, (chunk) => tx.insert(schema.aegisWeapons).values(chunk));
     await insertAll(archetypes, (chunk) => tx.insert(schema.aegisArchetypes).values(chunk));
+
+    // The manifest leaves many sources empty; the sheet knows where those drop.
+    await tx.execute(sql`
+      update weapons w
+         set source = a.source
+        from aegis_weapons a
+       where w.source = '' and lower(a.name) like '%' || lower(w.name) || '%' and a.source <> ''
+    `);
+    await tx.execute(accessStatement("weapons"));
 
     await tx.insert(schema.syncRuns).values({
       kind: "sheets",

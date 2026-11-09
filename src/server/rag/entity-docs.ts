@@ -11,6 +11,17 @@ export type EntityDocument = {
 
 const clean = (value: string | null | undefined) => (value ?? "").replace(/\s+/g, " ").trim();
 
+const ACCESS_LABELS: Record<string, string> = {
+  free: "free to play",
+  raid: "raid drop",
+  dungeon: "dungeon drop",
+  seasonal: "seasonal activity",
+  expansion: "expansion content",
+  event: "seasonal event",
+  archive: "Exotic Archive",
+  unknown: "unknown source",
+};
+
 const sentence = (parts: Array<string | null | undefined>) =>
   parts.map(clean).filter(Boolean).join(" ");
 
@@ -34,7 +45,7 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
 
   try {
     const weapons = await pool.query(
-      `select name, type, tier, damage_type, ammo_type, frame, stats, perks, source
+      `select name, type, tier, damage_type, ammo_type, frame, stats, perks, source, access
          from weapons`,
     );
     for (const row of weapons.rows) {
@@ -52,6 +63,7 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
           stats ? `Stats: ${stats}.` : "",
           perks ? `Possible perks include ${perks}.` : "",
           row.source ? `Source: ${row.source}.` : "",
+          row.access ? `Access: ${ACCESS_LABELS[row.access] ?? row.access}.` : "",
         ]),
         { type: row.type, tier: row.tier },
       );

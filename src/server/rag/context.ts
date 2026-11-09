@@ -111,7 +111,7 @@ async function queryEntities(intent: QuestionIntent): Promise<{ text: string; or
     const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
 
     const weapons = await pool.query(
-      `select name, type, tier, damage_type, ammo_type, stats, source
+      `select name, type, tier, damage_type, ammo_type, stats, source, access
          from weapons
         where name ilike any($1)
         limit 5`,
@@ -440,6 +440,83 @@ async function queryCommunityBuilds(
   }
 }
 
+// When the question is about what a new or free-to-play player can actually get,
+// answer from obtainable, tiered items and respect the ammo slot asked about.
+async function queryAccessibleWeapons(
+  intent: QuestionIntent,
+  question: string,
+): Promise<{ text: string; origins: Origin[] }> {
+  const wantsAccessible =
+    /\b(easy|free|f2p|new player|new light|cheap|no dlc|solo|beginner)\b/i.test(question);
+  if (!wantsAccessible) return { text: "", origins: [] };
+
+  const familyHints: Record<string, string> = {
+    Rockets: "Rocket Launcher",
+    HGLs: "Grenade Launcher",
+    BGLs: "Grenade Launcher",
+    LFRs: "Linear Fusion Rifle",
+    LMGs: "Machine Gun",
+    Autos: "Auto Rifle",
+    HCs: "Hand Cannon",
+    Pulses: "Pulse Rifle",
+    Scouts: "Scout Rifle",
+    Sidearms: "Sidearm",
+    SMGs: "Submachine Gun",
+    Fusions: "Fusion Rifle",
+    Glaives: "Glaive",
+    Shotguns: "Shotgun",
+    Snipers: "Sniper Rifle",
+    Traces: "Trace Rifle",
+    Swords: "Sword",
+    Bows: "Bow",
+  };
+  const typeHint = intent.families.map((family) => familyHints[family]).find(Boolean);
+  const ammoHint = /\bheavy|power\b/i.test(question)
+    ? "Heavy"
+    : /\bspecial\b/i.test(question)
+      ? "Special"
+      : /\bprimary\b/i.test(question)
+        ? "Primary"
+        : null;
+
+  const { pool } = createDatabase();
+  try {
+    const result = await pool.query(
+      `select w.name, w.type, w.damage_type, w.ammo_type, w.access, w.source,
+              a.tier, a.notes,
+              (w.source ~* 'gambit prime|black armory|forge|leviathan|menagerie|reckoning|scourge of the past|crown of sorrow|sundial') as stale_source
+         from weapons w
+         join aegis_weapons a on lower(a.name) = lower(w.name)
+        where w.access in ('free', 'event')
+          and ($1::text is null or w.type ilike '%' || $1 || '%')
+          and ($2::text is null or w.ammo_type = $2)
+          and a.tier in ('S', 'A', 'B')
+        order by case a.tier when 'S' then 0 when 'A' then 1 else 2 end, w.name
+        limit 10`,
+      [typeHint ?? null, ammoHint],
+    );
+    if (result.rows.length === 0) return { text: "", origins: [] };
+
+    const lines = result.rows.map(
+      (row) =>
+        `${row.name} (${row.tier} tier, ${row.damage_type} ${row.ammo_type} ${row.type}): access ${row.access}; ${row.source || "source unknown"}${row.stale_source ? " (in-game source text is historical and no longer accurate)" : ""}; ${row.notes || ""}`,
+    );
+
+    return {
+      text: `Obtainable weapons${typeHint ? ` (${typeHint})` : ""}${ammoHint ? `, ${ammoHint} ammo` : ""}:\n${lines.join("\n")}`,
+      origins: [
+        {
+          title: "Obtainable weapons",
+          sourceName: "Bungie manifest",
+          url: "https://www.bungie.net",
+        },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 async function queryArmorSets(
   intent: QuestionIntent,
 ): Promise<{ text: string; origins: Origin[] }> {
@@ -637,8 +714,12 @@ export async function buildStructuredContext(
   const context = history ? `${history}\n${question}` : question;
   const intent = detectIntent(context);
   const heavyOnly = /\b(heavy|power|boss)\b/i.test(context);
+  // Frame-level damage tables ignore obtainability, so they are withheld when the
+  // question is about what a new or free-to-play player can actually get.
+  const wantsAccessible =
+    /\b(easy|free|f2p|new player|new light|cheap|no dlc|solo|beginner)\b/i.test(context);
   const parts = await Promise.all([
-    queryFamilies(intent.families, intent.wantsDamage, heavyOnly),
+    queryFamilies(intent.families, intent.wantsDamage && !wantsAccessible, heavyOnly),
     queryEntities(intent),
     querySheets(intent),
     queryRotations(intent),
@@ -647,6 +728,7 @@ export async function buildStructuredContext(
     queryArmorForClass(context),
     queryArmorSets(intent),
     queryCommunityBuilds(context),
+    queryAccessibleWeapons(intent, context),
     queryExpansions(context),
     queryAcquisition(context),
   ]);
