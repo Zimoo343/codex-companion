@@ -21,6 +21,7 @@
     "ingest": "node --env-file=.env.local src/server/rag/ingest.ts",
     "ask": "node --env-file=.env.local src/server/rag/ask.ts",
     "eval": "node --env-file=.env.local src/server/rag/eval.ts",
+    "eval:answers": "node --env-file=.env.local src/server/rag/eval-answers.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"

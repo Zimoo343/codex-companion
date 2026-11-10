@@ -28,3 +28,6 @@ next-env.d.ts
 
 tsconfig.tsbuildinfo
 /architecture.png
+
+# generated eval artefacts
+evals/*-baseline.json

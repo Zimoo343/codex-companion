@@ -1,0 +1,234 @@
+[
+  {
+    "id": "exotic-weapon-vs-armour",
+    "trap": "exotic weapon vs exotic armour",
+    "question": "What are the best exotic weapons for boss damage?",
+    "expectFacts": [
+      "Parasite|Sleeper Simulant|Tractor Cannon|The Fourth Horseman|Ice Breaker|Gjallarhorn|Apex Predator|Whisper of the Worm|Dragon's Breath|Grand Overture|Still Hunt|Leviathan's Breath"
+    ],
+    "forbid": [
+      "Starfire Protocol",
+      "Cuirass of the Falling Star",
+      "Heart of Inmost Light",
+      "Necrotic Grip",
+      "Synthoceps",
+      "Phoenix Protocol"
+    ]
+  },
+  {
+    "id": "exotic-armour-vs-weapon",
+    "trap": "exotic armour vs exotic weapon",
+    "question": "What exotic armour should a Solar Warlock use in PvE?",
+    "expectFacts": ["Starfire Protocol|Sunbracers|Phoenix Protocol|Dawn Chorus|Vesper of Radius"],
+    "forbid": [
+      "Gjallarhorn",
+      "Apex Predator",
+      "Whisper of the Worm",
+      "Dragon's Breath",
+      "Grand Overture"
+    ]
+  },
+  {
+    "id": "heavy-ammo-only",
+    "trap": "heavy vs special ammo",
+    "question": "What is the best heavy weapon for boss damage?",
+    "expectFacts": [
+      "Apex Predator|Gjallarhorn|Cataclysmic|Grand Overture|Dragon's Breath|Whisper of the Worm|machine gun|linear fusion|rocket|sword"
+    ],
+    "forbid": ["Izanagi's Burden", "Succession", "Heritage", "Cartesian Coordinate", "Cloudstrike"]
+  },
+  {
+    "id": "special-ammo-only",
+    "trap": "special vs heavy ammo",
+    "question": "What is the best special ammo weapon for boss damage?",
+    "expectFacts": [
+      "Izanagi's Burden|Succession|Heritage|Cloudstrike|Still Hunt|sniper|shotgun|fusion rifle|special"
+    ],
+    "forbid": [
+      "Apex Predator",
+      "Gjallarhorn",
+      "Dragon's Breath",
+      "Cataclysmic",
+      "Grand Overture",
+      "Whisper of the Worm"
+    ]
+  },
+  {
+    "id": "spirit-vs-heart",
+    "trap": "Spirit perk vs exotic name",
+    "question": "Is Spirit of the Inmost Light the same as Heart of Inmost Light?",
+    "expectFacts": [
+      "Spirit of the Inmost Light",
+      "Heart of Inmost Light",
+      "class item|class-item",
+      "not the same|different|not identical|separate"
+    ],
+    "forbid": ["yes, it is the same", "yes they are the same", "they are identical"]
+  },
+  {
+    "id": "spirit-perk-category",
+    "trap": "Spirit perk is class-item only",
+    "question": "Can I put Spirit of the Assassin on my Hunter's exotic helmet?",
+    "expectFacts": ["Spirit of the Assassin|Assassin", "class item"],
+    "forbid": [
+      "yes, you can put",
+      "exotic helmet perk",
+      "Assassin's Cowl is the same",
+      "standalone exotic"
+    ]
+  },
+  {
+    "id": "archive-not-free",
+    "trap": "archive vs free",
+    "question": "Is Anarchy free to play?",
+    "expectFacts": ["Anarchy", "archive|not free|requires|paid"],
+    "forbid": ["yes, Anarchy is free", "Anarchy is free to play", "available for free"]
+  },
+  {
+    "id": "archive-requires-pack",
+    "trap": "archive vs free",
+    "question": "I am free-to-play. Can I buy Witherhoard from the Exotic Archive?",
+    "expectFacts": ["Witherhoard", "archive|not free|purchase requirement|requires|pack"],
+    "forbid": [
+      "no purchase required",
+      "does not require a pack",
+      "free to play players can buy",
+      "without owning"
+    ]
+  },
+  {
+    "id": "retired-stat-order",
+    "trap": "retired stat names",
+    "question": "A guide says 100 Resilience, 100 Discipline, 80 Recovery. What stat order should I run?",
+    "expectFacts": ["retired|not current|outdated|no longer current"],
+    "forbid": [
+      "run 100 Resilience",
+      "use 100 Resilience",
+      "100 Resilience first",
+      "100 Resilience is",
+      "prioritise Resilience",
+      "prioritize Resilience",
+      "Resilience remains",
+      "is equivalent"
+    ]
+  },
+  {
+    "id": "retired-stat-names",
+    "trap": "retired stat names",
+    "question": "List the current armour stats in Destiny 2 and what they do.",
+    "expectFacts": ["Health", "Melee", "Grenade", "Super", "Class", "Weapons"],
+    "forbid": [
+      "Resilience >",
+      "Mobility >",
+      "Recovery >",
+      "Discipline >",
+      "Intellect >",
+      "Strength >",
+      "prioritise Resilience",
+      "prioritize Resilience",
+      "100 Resilience",
+      "100 Mobility"
+    ]
+  },
+  {
+    "id": "no-current-stat-priority",
+    "trap": "retired stat names",
+    "question": "What stat priority does the published Stasis Titan build use?",
+    "expectFacts": [
+      "no current stat priority|not stated|retired|predates|does not state|no stat priority"
+    ],
+    "forbid": [
+      "priority is Resilience",
+      "prioritise Resilience",
+      "prioritize Resilience",
+      "Resilience >",
+      "Recovery >",
+      "Discipline >",
+      "Strength >"
+    ]
+  },
+  {
+    "id": "pair-it-heavy",
+    "trap": "pair it follow-up",
+    "question": "What should I pair it with?",
+    "history": "Player: What is the best heavy weapon for boss damage? Assistant: Gjallarhorn is a Solar rocket launcher and a strong heavy option.",
+    "expectFacts": [
+      "special|primary|energy|kinetic|sniper|shotgun|fusion rifle|auto rifle|hand cannon|pulse rifle|scout rifle|submachine|sidearm|trace rifle|glaive|different-slot|different slot"
+    ],
+    "forbid": [
+      "another rocket",
+      "second rocket",
+      "Apex Predator",
+      "Dragon's Breath",
+      "Cataclysmic",
+      "Grand Overture",
+      "Whisper of the Worm"
+    ]
+  },
+  {
+    "id": "pair-it-special",
+    "trap": "pair it follow-up",
+    "question": "What should I pair it with?",
+    "history": "Player: What is the best special ammo weapon for boss damage? Assistant: Succession is a Kinetic sniper rifle and a strong special option.",
+    "expectFacts": ["heavy|power|rocket|machine gun|linear fusion|sword|grenade launcher"],
+    "forbid": ["another sniper", "second sniper", "Izanagi's Burden", "Heritage", "Cloudstrike"]
+  },
+  {
+    "id": "class-items-unranked",
+    "trap": "class item combos are unranked",
+    "question": "Which Spirit of the Caliban combos are best for a Prismatic Hunter?",
+    "expectFacts": ["Spirit of Caliban", "not ranked|unordered|no ranking"],
+    "forbid": ["best combo is", "best pairing is", "top combo", "ranked first", "comes closest"]
+  },
+  {
+    "id": "popularity-refusal",
+    "trap": "no popularity data",
+    "question": "What is the most popular exotic weapon in Destiny 2?",
+    "expectFacts": ["no usage|does not track|do not track|not measured|no popularity|published by"],
+    "forbid": ["most popular is", "most used weapon is", "usage rate", "popularity is"],
+    "expectRefusal": "no_popularity"
+  },
+  {
+    "id": "non-destiny-refusal",
+    "trap": "out of scope",
+    "question": "How do I center a div in CSS?",
+    "expectFacts": ["Destiny 2"],
+    "forbid": ["flexbox", "margin auto", "display grid"],
+    "expectRefusal": "not_destiny"
+  },
+  {
+    "id": "live-state-refusal",
+    "trap": "live state",
+    "question": "What is Xur selling this week?",
+    "expectFacts": ["Xur", "inventory|selling|evidence|data"],
+    "forbid": [
+      "Xur is selling this week:",
+      "Xur is selling the following",
+      "Xur is selling these",
+      "this week's inventory",
+      "Xur has"
+    ],
+    "expectRefusal": "no_live_data"
+  },
+  {
+    "id": "historical-acquisition",
+    "trap": "historical source",
+    "question": "Where does Kindled Orchid drop?",
+    "expectFacts": ["Kindled Orchid", "Black Armory|historical|outdated|no longer|removed"],
+    "forbid": ["still drops", "currently drops from Black Armory", "can be farmed", "available now"]
+  },
+  {
+    "id": "build-expansion-requirement",
+    "trap": "build requirements",
+    "question": "How do I make a Prismatic Warlock build with Getaway Artist?",
+    "expectFacts": ["Prismatic", "Getaway Artist", "Final Shape|requires|expansion"],
+    "forbid": ["no expansion required", "does not require Final Shape", "free to play build"]
+  },
+  {
+    "id": "damage-assumption",
+    "trap": "damage assumptions",
+    "question": "What is the best rocket launcher for DPS?",
+    "expectFacts": ["rocket|launcher", "burst", "sustained"],
+    "forbid": ["guaranteed best", "no assumptions"]
+  }
+]
