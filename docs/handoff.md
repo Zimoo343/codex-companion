@@ -102,6 +102,21 @@ Chat with local-only history, streamed answers with a shimmer skeleton, collapsi
 references, rename, hold-to-dismantle, invite modal, mobile drawer, credits dialog, dark
 Destiny-style theme. The model never sees a database: the server queries and pastes rows.
 
+## Answer evals
+
+`evals/answers.json` holds 20 graded cases: question, expected facts, forbidden strings and
+optional expected refusal. They cover the traps that actually reached the user — exotic weapon
+vs armour, heavy vs special ammo, class-item perks, archive vs free, retired stat names,
+follow-up questions, live-state questions.
+
+- `pnpm eval:answers` runs the suite. Above five cases it refuses without `--yes` and prints
+  a token and cost estimate; `--only <id>` runs one case.
+- One full run re-sends about **114k prompt tokens** (20 cases × ~5.7k). A baseline, a fix pass
+  and a final run cost roughly **$1** on `gpt-5.4-mini`, which is 25× over the estimate. Iterate
+  with `--only`, run the full suite only to grade.
+- Baselines are generated, not committed; `evals/*-baseline.json` is ignored.
+- First baseline: 14/20, before the prompt and resolver fixes in `c07bc8c`.
+
 ## Known gaps
 
 1. **Stat priorities for pre-rework builds** are unavailable; answers say so rather than guess.
@@ -117,10 +132,8 @@ Destiny-style theme. The model never sees a database: the server queries and pas
 
 ## Next steps, in order
 
-1. Answer-level eval set: 20 questions with expected facts, including traps
-   (weapon vs armour category, stat names, heavy vs special ammo, archive vs free).
-2. Deterministic post-check that drops a stat order when no source carries a current line.
-3. Bungie API tools: rotation, Xur, vendors.
-4. Curated or sourced scenario builds; contributions from people who play those modes.
-5. Mastra is only worth adopting for eval/observability or an agent loop with live tools —
+1. Deterministic post-check that drops a stat order when no source carries a current line.
+2. Bungie API tools: rotation, Xur, vendors — the largest remaining product gap.
+3. Curated or sourced scenario builds; contributions from people who play those modes.
+4. Mastra is only worth adopting for eval/observability or an agent loop with live tools —
    never for ingestion, which carries hard-won domain knowledge.
