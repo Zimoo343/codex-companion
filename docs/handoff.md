@@ -1,137 +1,126 @@
-# Handoff — where the project stands
+# Handoff — Codex Companion
 
-Last updated: 2026-11-04. Read this first in a new session, then the design and plan
-under `docs/superpowers/`.
+Last updated: 2026-11-09. Read this first in a new session, then the design and plan under
+`docs/superpowers/`.
 
 ## What this is
 
-Codex Companion: a Destiny 2 knowledge companion. Plain-language answers for new and
-returning players, exact numbers on request, every answer citing the rows or
-documents it used.
+A Destiny 2 knowledge companion: a chat that answers from ingested game data and community
+sources, cites what it used, and refuses what it cannot support. Public repo:
+`github.com/Zimoo343/codex-companion`. Live: invite-only on Vercel, same Neon database as local.
 
-Repository: local folder `D:\VsCode\ai-rag`, repo name on GitHub will be
-`codex-companion`. Folder name is cosmetic; git does not care.
+## Working rules for the agent (non-negotiable)
 
-## Status
+- **Do not commit or push without explicit approval.** User says "commit" or "push".
+- **Do not write to the database without asking.** Re-syncs and re-ingests included.
+- **Use the edit tool for multi-file changes.** Small node scripts with a shared `path`
+  variable corrupted `context.ts` three times by writing the wrong file's contents into it.
+- **Run typecheck, tests and build before asking to commit.**
+- Never present invented stat orders, popularity claims or prices. See "Policies" below.
 
-Phase 2 in progress. Vector search works end to end in the terminal over 5344
-chunks (235 Destinypedia pages, 73 official announcements). Structured data lives in
-the same database and syncs with `pnpm sync`.
+## Stack
 
-OpenAI key expires **2027-02-03** (90 days from 2026-11-05). When it does, ingestion
-and every retrieval will fail with a 401 that looks like a bug.
+Next.js app router on Vercel, Neon Postgres with pgvector, Drizzle migrations, OpenAI
+`text-embedding-3-small` for embeddings, OpenCode (`gpt-5.4-mini`, Gemini fallback) for chat,
+plain SQL and hand-rolled resolvers instead of an agent framework.
 
-Phase 0 done and committed (`2d1a387`, plus `d9629dc`). Nothing else built yet.
+```
+pnpm run dev            # localhost:3000
+pnpm sync               # manifest + sheets + reference data
+pnpm sync builds        # Blueberries.gg community builds
+pnpm sync classitems    # AegisRelic class items and builds
+pnpm ingest announcements | wiki | entities
+pnpm eval               # retrieval hit@8
+pnpm test               # 55 unit tests
+node --env-file=.env.local scripts/inspect.mjs search "best rocket"
+```
 
-- Design: `docs/superpowers/specs/2026-11-04-codex-companion-design.md` — approved.
-- Plan: `docs/superpowers/plans/2026-11-04-codex-companion-plan.md` — approved, RAG
-  reordered to Phase 2 at the author's request, because learning retrieval is the
-  point of the project.
-- Spike: `spikes/manifest-probe/` — throwaway validation code, works, kept as
-  evidence. Has its own README and TESTING cheat sheet.
+## Data model as of now
 
-## Decisions, and why
+| table | rows | what |
+|---|---|---|
+| `entities` | 4,296 | embedded text per weapon, armour, plug, activity, class item, set, build, expansion, recommendation, damage frame |
+| `sheet_rows` | 2,657 | DDC + AegisRelic raw rows, tab-aware |
+| `weapons` | 1,318 | manifest stats, perks, `source`, `access` |
+| `aegis_weapons` / `aegis_archetypes` | 748 / 94 | tiers, recommended perks, damage math |
+| `subclass_plugs` | 331 | aspects, fragments, artifact perks |
+| `guides` | 259 | 168 Destinypedia mechanics chunks + 91 announcements |
+| `activities` | 214 | raids, dungeons, strikes, lost sectors |
+| `class_item_combos` | 192 | Spirit pairings |
+| `armor` / `armor_sets` | 141 / 56 | exotics with perks, set bonuses |
+| `community_builds` | 33 (28 with stats) | Blueberries.gg builds across class and subclass |
+| `builds` | 9 | AegisRelic class-item builds |
+| `expansions` | 10 | 9 releases + The Collection bundle |
+| `external_tools` | 10 | handoff links (DIM, destiny.report, light.gg, raid.report…) |
 
-- **Hybrid data model, not doc RAG.** Plain chunk-and-embed answers numbers
-  confidently and wrongly. Structured tables for facts, vector search for prose.
-- **eve as the agent framework**, with all data access behind own modules so tools
-  stay thin wrappers and the framework stays replaceable. eve is a release candidate;
-  that is the accepted risk.
-- **Data access in its own layer.** The spike's import logic ports to TypeScript in
-  Phase 1; tools never talk to the database directly.
-- **Plain answers by default, technical on request.** The author judged the spike's
-  number-dump answers unreadable for a new player.
-- **Handoffs instead of coverage.** DIM, d2armorpicker, destiny.report, light.gg,
-  braytech, raid.report, dungeon.report, trials.report, destinytracker, raidhub.
-  One sentence plus a link, never a list, never an ad.
-- **MIT licence for code**, community data stays with its authors, credited and
-  linked, never redistributed.
-- **Invite-only launch** on Vercel while the eval set is thin.
-- **Path of Exile 2 out of scope**, codename deliberately game-neutral.
-- **v1 includes vector search**: official announcements via the Steam news API, plus
-  Destinypedia under CC-BY-SA.
-- **Model access** through OpenCode Console service-account key, OpenAI-compatible
-  endpoint, `LLM_MODEL` plus `LLM_FALLBACK_MODEL`. No embedding model there.
-- **Embeddings: OpenAI `text-embedding-3-small`, chosen deliberately.** Local
-  embeddings through `transformers.js` were considered — free, no account, good for
-  learning — and rejected for this project because the target is a Vercel-hosted app
-  where a 130MB model per cold start is the wrong shape. Cost is a few cents for the
-  whole corpus plus roughly nothing per query. The provider still sits behind our own
-  module, so a local provider can be added later without touching callers.
+## Query path (one question)
 
-## Spike findings that must survive the port
+1. Guard: invite code, length, injection tripwire, per-IP daily quota — before any model call.
+2. Embed the question once.
+3. Hybrid retrieval over `guides`: vector top 40 + `tsvector` top 40, fused with RRF, 2 per
+   title, relevance gate, top 5.
+4. Structured resolvers in parallel: weapon families and damage tables, named entities, sheet
+   rows by tab, rotations, exotic weapons (slot-aware), class items, armour for class, armour
+   sets, expansions, acquisition, accessible weapons, community builds, stat mechanics.
+5. Context assembly: GAME DATA, ENTITY DATA, WIKI SOURCES, recent turns, `<player_question>`.
+6. One streaming model call.
+7. NDJSON deltas to the browser; references collapsed behind a button; manifest version footer.
 
-These each cost a debug cycle. Do not rediscover them.
+## Policies (and why)
 
-- Bungie's world content file is a **zip**, not raw SQLite. Unzip single entry, then
-  open with `node:sqlite`.
-- Item `ammoType` lives under `equippingBlock`, not `equipment`.
-- Damage type is an enum; map through `DestinyDamageTypeDefinition` to get names.
-- Weapons repeat under one name (reissues). Keep the row with the most plugs.
-- **Fragment and aspect descriptions live on the sandbox perk**, not on the item.
-  Without resolving `DestinySandboxPerkDefinition`, only 2 of 331 rows import.
-- Activities repeat per difficulty. Collapse by name, keep a `variants` count;
-  1708 rows become 214.
-- Sheet CSVs contain commas and newlines inside quoted cells. Use a real parser.
-- The sheet header row drives the column mapping; a renamed column fails silently
-  unless the import checks it.
-- `meta` has columns `key` and `value`. Aliasing that table causes a bad query.
-- Tier letters are S,A,B,C,D,E,F. Never cast them to numbers.
-- "Best DPS" is ambiguous: burst (`1mag_bdps`) versus sustained (`typical_bdps`,
-  `max_bdps`). Answers must state the assumption.
-- Sword rows repeat the same value across all three DPS columns, because they assume
-  constant heavy ammo and melee range. Say so.
-- `light.gg` returns 403 to bots and has no public API. Link out, never scrape.
-- Bungie's own news feed gives titles only; the article page returns a shell. Steam's
-  public news API gives full Bungie announcements, filter to
-  `steam_community_announcements`.
-- OpenCode's `/models` lives at `/inference/v1/models`, chat at
-  `/inference/openai/v1/chat/completions`.
-- Gemini 3.5 Flash Lite returns 502 upstream in bursts; that is why the fallback
-  model exists.
+- **Access labels.** `weapons.access` / `armor.access`: free, event, seasonal, archive,
+  expansion, raid, dungeon, unknown. Derived from drop source, enriched from the AegisRelic
+  sheet. `free` requires a known current source, so vaulted content is `unknown`.
+  Archive items are never described as free.
+- **Accessibility questions** answer from an obtainable, tiered list and withhold the
+  frame-level damage tables, because a top frame may only exist on raid weapons. Ammo must
+  match the question: heavy questions never list special or primary.
+- **Retired armour stats.** Post-Edge-of-Fate stats are Health, Melee, Grenade, Super, Class,
+  Weapons, 0-200; up to 100 is cooldown and regeneration, above 100 is damage. Pre-rework
+  names (Mobility, Resilience, Recovery, Discipline, Intellect, Strength) are **never
+  translated** and **no stat order is composed**. A build states its current priority or the
+  answer says none is stated. Stat mechanics come from the DDC Game Mechanics tab and are only
+  fetched for mechanics questions. Two attempts at inferring orders produced wrong advice
+  (Health over Melee for a melee build), which is why the rule is absolute.
+- **DLC ownership** is resolved in SQL against `expansions`, never inferred by the model.
+  The Collection is a bundle: an option, never an owner, never priced.
+- **Acquisition** uses Bungie's collectible `Source:` strings verbatim. Strings that reference
+  removed content (Gambit Prime, Black Armory, Leviathan) are flagged historical. Strings like
+  "Random Perks: cannot be reacquired" are ignored.
+- **Builds** are described by subclass, class and exotic; the guide's own name appears only in
+  parentheses. Most of the community does not name builds.
+- **No popularity claims.** Nothing we ingest measures usage. Answers say "published by X".
+- **Credits** for Blueberries.gg (Ric Molina), AegisRelic, Destiny Data Compendium,
+  Destinypedia (CC BY-SA 4.0), Bungie, Steam announcements. Facts are extracted; article prose
+  is not copied.
+- **Do not scrape** light.gg (403, no API) or builders.gg (robots disallows AI crawlers).
+  Handoff links instead.
 
-## Spike numbers to reproduce in Phase 1
+## Interface
 
-141 exotic armor, 331 subclass plugs, 214 activities, 748 per-weapon recommendation
-rows, 94 archetype rows, 10 external tools. Manifest version seen:
-`245114.26.10.13.2000-1-bnet.66137`.
+Chat with local-only history, streamed answers with a shimmer skeleton, collapsible
+references, rename, hold-to-dismantle, invite modal, mobile drawer, credits dialog, dark
+Destiny-style theme. The model never sees a database: the server queries and pastes rows.
 
-Weapons land at **1318**, not the spike's 1393. Difference is intentional: the spike
-kept every reissue that tied on plug count, Phase 1 keeps exactly one row per name,
-picking the widest plug list. Deterministic beats faithful to a tie.
+## Known gaps
 
-## Prerequisites for Phase 1
+1. **Stat priorities for pre-rework builds** are unavailable; answers say so rather than guess.
+   Fixing this needs a current build source or curated entries.
+2. **Scenario tags** (lowman, speedrun, challenge) do not exist; sources do not label builds
+   that way.
+3. **No live state**: weekly rotation, Xur, vendors, current artifact need the Bungie API.
+4. **No answer-level evals.** Retrieval is scored (hit@8); prose is not. Category and stat
+   regressions were caught by the user, not by tests.
+5. **Post-checks missing**: the model can still volunteer a stat order or pipeline language;
+   there is a client scrub for the latter only.
+6. **546 weapons have `unknown` access**, mostly legacy source strings Bungie never updated.
 
-1. **Rotate the API key pasted into chat** and put the new one only in `.env.local`.
-2. **Neon project** created; `DATABASE_URL` in `.env.local`, never in chat or git.
-3. Decide **public or private** for the GitHub repo; `gh` is authenticated as
-   `Zimoo343`, so pushing is one command.
+## Next steps, in order
 
-## What exists now
-
-- `pnpm ask "question"` — retrieve chunks, print similarities, answer with citations
-- `pnpm ingest announcements` — official Steam posts (BBCode)
-- `pnpm ingest wiki --limit 220` — Destinypedia pages seeded from concepts plus our own gear and activity data
-- `docs/rag-notes.md` — parameters, what the runs taught us, next experiments
-- `pnpm sync` — manifest, sheets and reference data into Postgres, with a version gate
-- `pnpm sync manifest|sheets|reference` — run one part
-- `pnpm test` — 17 unit tests, Node's own runner, no build step
-- `pnpm typecheck`, `pnpm lint`, `pnpm fmt`
-- `drizzle/` — migrations, pgvector already enabled
-
-## Next step
-
-Finish Phase 2 by running the experiments listed at the end of `docs/rag-notes.md`,
-in order: recency boost, hybrid search for perk names, per-source chunk sizes, query
-rewriting, reranking. Each one needs eval questions first.
-
-Then Phase 3 — the eve agent with `query_game_data` and `search_guides` as tools.
-
-Prerequisite: an OpenAI API key in `.env.local` as `OPENAI_API_KEY`.
-
-Create it at `platform.openai.com` → Billing (add $5) → API keys → name it
-`codex-companion`, then set a project monthly limit of $5. Corpus embedding costs
-roughly 2–4 cents once; re-embedding only happens for changed text.
-
-Note: embeddings from different models are not interchangeable. If the provider ever
-changes, the whole corpus must be re-embedded and the vector column rebuilt.
+1. Answer-level eval set: 20 questions with expected facts, including traps
+   (weapon vs armour category, stat names, heavy vs special ammo, archive vs free).
+2. Deterministic post-check that drops a stat order when no source carries a current line.
+3. Bungie API tools: rotation, Xur, vendors.
+4. Curated or sourced scenario builds; contributions from people who play those modes.
+5. Mastra is only worth adopting for eval/observability or an agent loop with live tools —
+   never for ingestion, which carries hard-won domain knowledge.
