@@ -537,8 +537,9 @@ async function queryLiveState(question: string): Promise<{ text: string; origins
   if (wantsRotation) {
     const rotation = await getRotation();
     if (rotation) {
+      const list = rotation.names.length > 0 ? rotation.names.join(", ") : "none returned";
       lines.push(
-        `Weekly milestones as of ${rotation.fetchedAt.toISOString()}: ${rotation.names.join(", ") || "none returned"}.`,
+        `Weekly milestones, checked ${rotation.fetchedLabel}: ${list}. Give this as a short readable list, not a raw timestamp.`,
       );
     }
   }
@@ -548,8 +549,8 @@ async function queryLiveState(question: string): Promise<{ text: string; origins
     if (xur) {
       lines.push(
         xur.present
-          ? `Xur stock as of ${xur.fetchedAt.toISOString()}: ${xur.items.join(", ")}. Next refresh ${xur.nextRefresh}.`
-          : `Xur is not in town right now (checked ${xur.fetchedAt.toISOString()}). Next vendor refresh ${xur.nextRefresh}.`,
+          ? `Xur is in town as of ${xur.fetchedLabel}. He is selling: ${xur.items.join(", ")}. He leaves at the next refresh, ${xur.nextRefreshLabel}.`
+          : `Xur is not in town as of ${xur.fetchedLabel}. He returns at the next vendor refresh, ${xur.nextRefreshLabel}.`,
       );
     }
   }

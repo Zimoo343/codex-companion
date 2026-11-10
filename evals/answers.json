@@ -244,5 +244,19 @@
     "question": "what is xur selling right now?",
     "expectFacts": ["not in town|next refresh|vendor refresh|not selling"],
     "forbid": ["I do not have live data"]
+  },
+  {
+    "id": "vog-is-free",
+    "trap": "free activity attributed to an expansion",
+    "question": "does Vault of Glass need Beyond Light?",
+    "expectFacts": ["free"],
+    "forbid": ["beyond light"]
+  },
+  {
+    "id": "live-dates-readable",
+    "trap": "raw ISO timestamps in a live answer",
+    "question": "do you know when xur is coming?",
+    "expectFacts": ["friday|next vendor refresh|returns"],
+    "forbid": ["t09:", "t17:", "z."]
   }
 ]

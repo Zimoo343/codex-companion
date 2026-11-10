@@ -2,6 +2,23 @@
 import { createDatabase } from "../db/client.ts";
 
 const BUNGIE = "https://www.bungie.net";
+
+// Bungie returns ISO timestamps. Answers should read like a person wrote them.
+export function formatUtc(iso: string | Date): string {
+  if (!iso) return "an unknown time";
+  const date = typeof iso === "string" ? new Date(iso) : iso;
+  if (Number.isNaN(date.getTime())) return "an unknown time";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+    timeZoneName: "short",
+  }).format(date);
+}
 const MINUTE = 60_000;
 
 export type CachedValue<T> = { value: T; fetchedAt: Date };
@@ -63,7 +80,11 @@ async function bungie<T>(path: string, ttlMs: number): Promise<CachedValue<T> | 
 type MilestoneEntry = { order?: number; activities?: Array<{ activityHash: number }> };
 
 // Weekly content. Destination milestones sit in a low order band, weekly ones above 3000.
-export async function getRotation(): Promise<{ names: string[]; fetchedAt: Date } | null> {
+export async function getRotation(): Promise<{
+  names: string[];
+  fetchedAt: Date;
+  fetchedLabel: string;
+} | null> {
   const payload = await bungie<Record<string, MilestoneEntry>>(
     "/Platform/Destiny2/Milestones/",
     30 * MINUTE,
@@ -74,7 +95,9 @@ export async function getRotation(): Promise<{ names: string[]; fetchedAt: Date 
     .filter(([, milestone]) => (milestone.order ?? 0) >= 3000)
     .map(([hash]) => hash);
 
-  if (weekly.length === 0) return { names: [], fetchedAt: payload.fetchedAt };
+  if (weekly.length === 0) {
+    return { names: [], fetchedAt: payload.fetchedAt, fetchedLabel: formatUtc(payload.fetchedAt) };
+  }
 
   const { pool } = createDatabase();
   try {
@@ -85,7 +108,7 @@ export async function getRotation(): Promise<{ names: string[]; fetchedAt: Date 
     const names = result.rows
       .map((row) => row.name)
       .filter((name) => !/engrams?|clan|destination/i.test(name));
-    return { names, fetchedAt: payload.fetchedAt };
+    return { names, fetchedAt: payload.fetchedAt, fetchedLabel: formatUtc(payload.fetchedAt) };
   } finally {
     await pool.end();
   }
@@ -110,7 +133,9 @@ export async function getXur(): Promise<{
   present: boolean;
   items: string[];
   nextRefresh: string;
+  nextRefreshLabel: string;
   fetchedAt: Date;
+  fetchedLabel: string;
 } | null> {
   const payload = await bungie<VendorsResponse>(
     "/Platform/Destiny2/Vendors/?components=400,401",
@@ -125,7 +150,14 @@ export async function getXur(): Promise<{
   const vendors = payload.value.vendors?.data ?? {};
   const vendor = Object.entries(vendors).find(([hash]) => vendorHashes.has(hash))?.[1];
   if (!vendor) {
-    return { present: false, items: [], nextRefresh: "", fetchedAt: payload.fetchedAt };
+    return {
+      present: false,
+      items: [],
+      nextRefresh: "",
+      nextRefreshLabel: "",
+      fetchedAt: payload.fetchedAt,
+      fetchedLabel: formatUtc(payload.fetchedAt),
+    };
   }
 
   const itemHashes = Object.values(vendor.saleItems ?? {}).map((sale) => String(sale.itemHash));
@@ -134,7 +166,9 @@ export async function getXur(): Promise<{
       present: false,
       items: [],
       nextRefresh: vendor.nextRefreshDate,
+      nextRefreshLabel: formatUtc(vendor.nextRefreshDate),
       fetchedAt: payload.fetchedAt,
+      fetchedLabel: formatUtc(payload.fetchedAt),
     };
   }
 
@@ -150,7 +184,9 @@ export async function getXur(): Promise<{
       present: true,
       items: result.rows.map((row) => row.name),
       nextRefresh: vendor.nextRefreshDate,
+      nextRefreshLabel: formatUtc(vendor.nextRefreshDate),
       fetchedAt: payload.fetchedAt,
+      fetchedLabel: formatUtc(payload.fetchedAt),
     };
   } finally {
     await pool.end();
