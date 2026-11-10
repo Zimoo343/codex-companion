@@ -1,6 +1,6 @@
 import { detectIntent, type QuestionIntent } from "./intent.ts";
 import { createDatabase } from "../db/client.ts";
-import { currentStats, usesLegacyStats } from "../../lib/stats.ts";
+import { currentStatLine } from "../../lib/stats.ts";
 
 type Row = Record<string, unknown>;
 
@@ -418,12 +418,19 @@ async function queryCommunityBuilds(
     );
     if (result.rows.length === 0) return { text: "", origins: [] };
 
+    // No stat synthesis: a build either states a current stat priority or it does not.
+    // Guides from before the rework use retired stats, and guessing an order for them
+    // produced confidently wrong advice.
     const lines = result.rows.map((row) => {
       const exotics = (row.exotics as string[]).join(" + ");
       const aspects = (row.aspects as string[]).join(", ");
       const fragments = (row.fragments as string[]).join(", ");
       const abilities = (row.abilities as string[]).join(", ");
-      return `${row.subclass} ${row.class} with ${exotics} (listed by ${row.source} as "${row.name}"): aspects ${aspects}; fragments ${fragments}; abilities ${abilities}; stat priority ${row.stats}; requires ${row.requires}`;
+      const current = currentStatLine(String(row.stats));
+      const stats = current
+        ? `stat priority ${current}`
+        : "no current stat priority stated (guide predates the Edge of Fate stat rework)";
+      return `${row.subclass} ${row.class} with ${exotics} (listed by ${row.source} as "${row.name}"): aspects ${aspects}; fragments ${fragments}; abilities ${abilities}; ${stats}; requires ${row.requires}`;
     });
 
     return {
@@ -443,6 +450,49 @@ async function queryCommunityBuilds(
 
 // When the question is about what a new or free-to-play player can actually get,
 // answer from obtainable, tiered items and respect the ammo slot asked about.
+// Destiny Data Compendium explains what each armour stat does above and below 100.
+// This is the authoritative source for stat behaviour, so it is quoted rather than
+// described from memory.
+async function queryStatSystem(question: string): Promise<{ text: string; origins: Origin[] }> {
+  const wantsStats = /\bstat|stats|build\b/i.test(question);
+  if (!wantsStats) return { text: "", origins: [] };
+
+  const { pool } = createDatabase();
+  try {
+    const result = await pool.query<{ row: Record<string, string> }>(
+      `select row from sheet_rows
+        where tab = 'Game Mechanics'
+          and row::text ~* 'ENHANCED BENEFIT'
+          and row::text ~* '(Health|Melee|Grenade|Super|Class|Weapons)'
+        limit 8`,
+    );
+    if (result.rows.length === 0) return { text: "", origins: [] };
+
+    const lines = result.rows
+      .map((entry) => {
+        const stat = entry.row.col_2 ?? "";
+        const description = (entry.row.col_4 ?? "").replace(/\s+/g, " ").slice(0, 400);
+        return stat && description ? `${stat}: ${description}` : "";
+      })
+      .filter(Boolean);
+
+    if (lines.length === 0) return { text: "", origins: [] };
+
+    return {
+      text: `Armour stat behaviour (Destiny Data Compendium):\n${lines.join("\n")}`,
+      origins: [
+        {
+          title: "Game Mechanics · stats",
+          sourceName: "Destiny Data Compendium",
+          url: "https://docs.google.com/spreadsheets/d/1WaxvbLx7UoSZaBqdFr1u32F2uWVLo-CJunJB4nlGUE4",
+        },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 async function queryAccessibleWeapons(
   intent: QuestionIntent,
   question: string,
@@ -605,7 +655,6 @@ async function querySheets(intent: QuestionIntent): Promise<{ text: string; orig
       "Exotic Class",
       "Class Abilities",
     ];
-    const WEAPON_TABS = ["Weapon Perks", "Exotic Weapons"];
     const excluded = intent.wantsWeapon && !intent.wantsArmor ? [...ARMOR_TABS] : [];
     if (intent.phrases.some((phrase) => /\bsets?\b/.test(phrase))) excluded.push("Exotic Armors");
 
@@ -730,6 +779,7 @@ export async function buildStructuredContext(
     queryArmorSets(intent),
     queryCommunityBuilds(context),
     queryAccessibleWeapons(intent, context),
+    queryStatSystem(context),
     queryExpansions(context),
     queryAcquisition(context),
   ]);

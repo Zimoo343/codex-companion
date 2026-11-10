@@ -1,21 +1,21 @@
-// Before the Edge of Fate rework, armour stats were Mobility, Resilience, Recovery,
-// Discipline, Intellect and Strength. Current stats are Health, Melee, Grenade,
-// Super, Class and Weapons.
+// Post-Edge-of-Fate armour stats: Health, Melee, Grenade, Super, Class, Weapons.
+// Each runs 0-200. Up to 100 gives cooldown/ability regeneration; above 100 adds
+// damage for that stat's ability (grenade, melee, super, weapon damage).
 //
-// There is no safe 1:1 translation: Mobility is not Weapons, and Resilience was far
-// more valuable than Health is in PvE. So legacy stat lines are not translated; they
-// are treated as advisory only and withheld from answers.
+// Pre-rework names (Mobility, Resilience, Recovery, Discipline, Intellect, Strength)
+// are NOT interchangeable with these, and guides written before the rework do not
+// state current priorities. They are detected and reported as outdated, not translated.
 
 export function usesLegacyStats(text: string): boolean {
   return /\b(resilience|mobility|recovery|discipline|intellect|strength)\b/i.test(text);
 }
 
-// Returns the stat line to show, or an empty string when the source's stat advice
-// predates the rework and cannot be mapped onto current stats.
-export function currentStats(stats: string): string {
-  if (stats.trim().length === 0) return "";
-  return usesLegacyStats(stats) ? "" : stats.trim();
+// Current stat line, or an empty string when the source only knows the old system.
+export function currentStatLine(stats: string): string {
+  const trimmed = stats.trim();
+  if (trimmed.length === 0) return "";
+  return usesLegacyStats(trimmed) ? "" : trimmed;
 }
 
-export const LEGACY_STATS_NOTE =
-  "the guide's stat advice predates the Edge of Fate stat rework, so it is not repeated here";
+export const STAT_SYSTEM_NOTE =
+  "Current armour stats are Health, Melee, Grenade, Super, Class and Weapons, each 0-200. Up to 100 gives cooldown and regeneration benefits; above 100 adds damage for that stat. Guides written before the Edge of Fate rework use retired stat names and do not state a current priority.";

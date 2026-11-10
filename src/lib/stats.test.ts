@@ -1,19 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { currentStats, usesLegacyStats } from "./stats.ts";
+import { currentStatLine, usesLegacyStats } from "./stats.ts";
 
 test("detects pre-Edge-of-Fate vocabulary", () => {
-  assert.equal(usesLegacyStats("Resilience first for survivability"), true);
-  assert.equal(usesLegacyStats("Mobility -> Resilience -> Recovery"), true);
-  assert.equal(usesLegacyStats("Grenade -> Weapons -> Super"), false);
+  assert.equal(usesLegacyStats("Max Resilience."), true);
+  assert.equal(usesLegacyStats("Melee -> Grenade -> Super"), false);
 });
 
-test("withholds legacy stat lines instead of translating them", () => {
-  assert.equal(currentStats("Resilience -> Strength"), "");
-  assert.equal(currentStats("Discipline"), "");
+test("refuses to translate legacy lines into current priorities", () => {
+  assert.equal(currentStatLine("Max Resilience."), "");
+  assert.equal(currentStatLine("Discipline then Intellect"), "");
 });
 
-test("keeps current stat lines", () => {
-  assert.equal(currentStats("Grenade -> Weapons -> Super"), "Grenade -> Weapons -> Super");
-  assert.equal(currentStats(""), "");
+test("passes current stat lines through", () => {
+  assert.equal(currentStatLine("Melee → Grenade → Super"), "Melee → Grenade → Super");
+  assert.equal(currentStatLine(""), "");
 });

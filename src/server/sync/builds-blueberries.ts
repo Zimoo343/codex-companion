@@ -88,7 +88,13 @@ const KNOWN_STATS =
   /\b(health|melee|grenade|super|class|weapons|resilience|mobility|recovery|discipline|intellect|strength)\b/i;
 
 function cleanStats(value: string): string {
-  return KNOWN_STATS.test(value) ? value.trim() : "";
+  // The stat cell often runs into the next labelled block: "Max Resilience. Armor
+  // Bonus Set &". Cut at that boundary and drop trailing punctuation.
+  const trimmed = value
+    .split(/Armor Bonus|Mods\s*:/i)[0]!
+    .replace(/[\s.&,;:-]+$/, "")
+    .trim();
+  return KNOWN_STATS.test(trimmed) ? trimmed : "";
 }
 
 const splitList = (value: string): string[] =>
@@ -177,11 +183,6 @@ export function parseBuildsPage(html: string, pageUrl: string): ParsedBuild[] {
 
 export async function ingestBlueberriesBuilds() {
   const { db, pool } = createDatabase();
-
-  const hub = await fetchPage(HUB);
-  const linked = [...hub.matchAll(/href="(https:\/\/www\.blueberries\.gg\/[^"]+)"/g)]
-    .map((match) => match[1]!)
-    .filter((url) => url.includes("/armor/"));
 
   const pages = [...new Set(PAGE_HINTS.map((hint) => `https://www.blueberries.gg${hint}`))];
 
