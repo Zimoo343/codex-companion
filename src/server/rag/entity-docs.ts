@@ -1,5 +1,6 @@
 import { createDatabase } from "../db/client.ts";
 import { contentHash } from "./embed.ts";
+import { currentStats, LEGACY_STATS_NOTE, usesLegacyStats } from "../../lib/stats.ts";
 
 export type EntityDocument = {
   kind: string;
@@ -166,7 +167,7 @@ export async function buildEntityDocuments(): Promise<EntityDocument[]> {
       push(
         "community_build",
         `${row.subclass} ${row.class} build with ${exotics}`,
-        `A ${row.subclass} ${row.class} build built around ${exotics}. Aspects: ${(row.aspects as string[]).join(", ")}. Fragments: ${(row.fragments as string[]).join(", ")}. Abilities: ${(row.abilities as string[]).join(", ")}. Stat priority: ${row.stats}. Requires ${row.requires}. ${row.source} lists this one as "${row.name}".`,
+        `A ${row.subclass} ${row.class} build built around ${exotics}. Aspects: ${(row.aspects as string[]).join(", ")}. Fragments: ${(row.fragments as string[]).join(", ")}. Abilities: ${(row.abilities as string[]).join(", ")}. ${usesLegacyStats(row.stats) ? `No current stat priority: ${LEGACY_STATS_NOTE}.` : `Stat priority: ${currentStats(row.stats)}.`} Requires ${row.requires}. ${row.source} lists this one as "${row.name}".`,
         { class: row.class, subclass: row.subclass, source: row.source, sourceUrl: row.source_url },
       );
     }

@@ -82,6 +82,15 @@ function field(text: string, name: string, nextNames: string[]): string {
   return rest.slice(0, end).trim();
 }
 
+// Some pages put prose where the stat line should be ("Brawler. Armor Bonus Set &").
+// A real stat line names at least one armour stat.
+const KNOWN_STATS =
+  /\b(health|melee|grenade|super|class|weapons|resilience|mobility|recovery|discipline|intellect|strength)\b/i;
+
+function cleanStats(value: string): string {
+  return KNOWN_STATS.test(value) ? value.trim() : "";
+}
+
 const splitList = (value: string): string[] =>
   value
     .replace(/\.$/, "")
@@ -154,8 +163,11 @@ export function parseBuildsPage(html: string, pageUrl: string): ParsedBuild[] {
       aspects,
       fragments,
       abilities: splitList(field(text, "Abilities", ["Stats"])),
-      stats: field(text, "Stats", ["Mods"]),
-      mods: field(text, "Mods", FIELDS),
+      stats: cleanStats(field(text, "Stats", ["Mods"])),
+      mods:
+        field(text, "Mods", FIELDS)
+          .split(/Gameplay Loop/i)[0]
+          ?.trim() ?? "",
       url: pageUrl,
     });
   });

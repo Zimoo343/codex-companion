@@ -1,5 +1,6 @@
 import { detectIntent, type QuestionIntent } from "./intent.ts";
 import { createDatabase } from "../db/client.ts";
+import { currentStats, usesLegacyStats } from "../../lib/stats.ts";
 
 type Row = Record<string, unknown>;
 
