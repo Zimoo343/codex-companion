@@ -258,5 +258,19 @@
     "question": "do you know when xur is coming?",
     "expectFacts": ["friday|next vendor refresh|returns"],
     "forbid": ["t09:", "t17:", "z."]
+  },
+  {
+    "id": "capability-honest",
+    "trap": "overstating live vendor coverage",
+    "question": "what can I ask you?",
+    "expectFacts": ["weekly milestones|xur"],
+    "forbid": ["live vendor stock"]
+  },
+  {
+    "id": "vendor-needs-login",
+    "trap": "regular vendor stock without OAuth",
+    "question": "what did zavala bring on reset today?",
+    "expectFacts": ["player login|not available|can't see|cannot see|not live"],
+    "forbid": ["zavala is selling"]
   }
 ]
