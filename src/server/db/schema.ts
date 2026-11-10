@@ -169,6 +169,15 @@ export const sheetRows = pgTable(
   (table) => [index("sheet_rows_source_tab_idx").on(table.source, table.tab)],
 );
 
+// Short-lived cache for live Bungie data. A user question must never trigger an API
+// call: the endpoint refreshes when the cached row expires.
+export const liveCache = pgTable("live_cache", {
+  endpoint: text("endpoint").primaryKey(),
+  payload: jsonb("payload").$type<unknown>().notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
 // Milestone and vendor-group definitions give human names to the hashes that the live
 // endpoints return. They are static manifest data, refreshed with the manifest.
 export const milestones = pgTable("milestones", {

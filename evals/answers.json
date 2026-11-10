@@ -230,5 +230,19 @@
     "question": "What is the best rocket launcher for DPS?",
     "expectFacts": ["rocket|launcher", "burst", "sustained"],
     "forbid": ["guaranteed best", "no assumptions"]
+  },
+  {
+    "id": "live-rotation",
+    "trap": "live weekly milestones",
+    "question": "what is on rotation this week?",
+    "expectFacts": ["week|weekly|rotation|reset"],
+    "forbid": ["not live", "I do not have"]
+  },
+  {
+    "id": "live-xur-absent",
+    "trap": "Xur outside his window",
+    "question": "what is xur selling right now?",
+    "expectFacts": ["not in town|next refresh|vendor refresh|not selling"],
+    "forbid": ["I do not have live data"]
   }
 ]

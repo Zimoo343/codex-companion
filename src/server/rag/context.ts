@@ -1,6 +1,7 @@
 import { detectIntent, type QuestionIntent } from "./intent.ts";
 import { createDatabase } from "../db/client.ts";
 import { currentStatLine } from "../../lib/stats.ts";
+import { getRotation, getXur } from "../live/bungie.ts";
 
 type Row = Record<string, unknown>;
 
@@ -522,6 +523,45 @@ async function queryCommunityBuilds(
 // Destiny Data Compendium explains what each armour stat does above and below 100.
 // This is the authoritative source for stat behaviour, so it is quoted rather than
 // described from memory.
+// Live state: weekly milestones and Xur. Cached, so a question never triggers an API call
+// more often than the cache window.
+async function queryLiveState(question: string): Promise<{ text: string; origins: Origin[] }> {
+  const wantsRotation = /\b(rotation|reset|weekly|this week|milestones?|raid rotator)\b/i.test(
+    question,
+  );
+  const wantsXur = /\bxu?r\b/i.test(question);
+  if (!wantsRotation && !wantsXur) return { text: "", origins: [] };
+
+  const lines: string[] = [];
+
+  if (wantsRotation) {
+    const rotation = await getRotation();
+    if (rotation) {
+      lines.push(
+        `Weekly milestones as of ${rotation.fetchedAt.toISOString()}: ${rotation.names.join(", ") || "none returned"}.`,
+      );
+    }
+  }
+
+  if (wantsXur) {
+    const xur = await getXur();
+    if (xur) {
+      lines.push(
+        xur.present
+          ? `Xur stock as of ${xur.fetchedAt.toISOString()}: ${xur.items.join(", ")}. Next refresh ${xur.nextRefresh}.`
+          : `Xur is not in town right now (checked ${xur.fetchedAt.toISOString()}). Next vendor refresh ${xur.nextRefresh}.`,
+      );
+    }
+  }
+
+  if (lines.length === 0) return { text: "", origins: [] };
+
+  return {
+    text: `Live state (Bungie API, cached):\n${lines.join("\n")}`,
+    origins: [{ title: "Live state", sourceName: "Bungie API", url: "https://www.bungie.net" }],
+  };
+}
+
 async function queryStatSystem(question: string): Promise<{ text: string; origins: Origin[] }> {
   const wantsStats = /\bstat|stats|build\b/i.test(question);
   if (!wantsStats) return { text: "", origins: [] };
@@ -850,6 +890,7 @@ export async function buildStructuredContext(
     queryCommunityBuilds(context),
     queryAccessibleWeapons(intent, context),
     queryStatSystem(context),
+    queryLiveState(context),
     queryExpansions(context),
     queryAcquisition(context),
   ]);
