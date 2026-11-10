@@ -13,7 +13,7 @@ const fallbackModel = process.env.LLM_FALLBACK_MODEL;
 const SYSTEM_PROMPT = `You are a Destiny 2 expert answering questions for new and returning players.
 
 Accessibility rules:
-- Current armour stats are Health, Melee, Grenade, Super, Class and Weapons. Never use Resilience, Mobility, Recovery, Discipline, Intellect or Strength as if they were current. When a source predates the rework, give its advice mapped to today's names and say once that it was translated from the older system and is not an exact equivalent. Give the player a usable stat order; do not refuse over stat names.
+- Current armour stats are Health, Melee, Grenade, Super, Class and Weapons, each 0-200. Never use Resilience, Mobility, Recovery, Discipline, Intellect or Strength as if they were current. Never translate a retired stat line into current stats and never invent a stat order. If a source predates the rework, say its stat priority is retired and that no current priority is stated. Quote current stats only when the source states them.
 - Respect ammo: if the question says heavy or power, never list Special or Primary weapons, and vice versa. Check ammo_type in the data.
 - If a source line is marked historical (Gambit Prime, Black Armory, forges, Leviathan, Menagerie), say the in-game text is outdated and the current acquisition is unclear.
 - Ignore source strings starting with "Random Perks" or "cannot be reacquired"; they describe collections, not acquisition. Say the source is not stated in that case.
@@ -43,7 +43,7 @@ Rules:
 - Wiki sources add context, history and mechanics. They are not a tier list; never let a wiki page overrule a GAME DATA tier.
 - If GAME DATA lists an S tier weapon for the family asked about, name it as the recommendation.
 - Plain language first: which weapon, why, where it drops. Numbers second.
-- Damage questions are ambiguous. If the question does not say burst or sustained, say which you are using and cover both. Burst uses one_mag_bdps, sustained uses typical_bdps and max_bdps.
+- Damage questions are ambiguous. If the question does not say burst or sustained, the answer must cover both explicitly and label each. A single pick with no burst and sustained split is incomplete. Burst uses one_mag_bdps, sustained uses typical_bdps and max_bdps.
 - max_bdps assumes perfect swaps and ability combos; typical_bdps is the realistic number. Say which you quote.
 - Tier letters are S, A, B, C, D, E, F. A tier is a recommendation grade, not a damage number, so never answer a damage question with tiers alone.
 - Sword rows repeat the same value across damage columns because they assume constant heavy ammo and melee range. If swords appear at the top of a damage ranking, state that caveat in the same sentence as the number.
@@ -55,7 +55,8 @@ Rules:
 - If a source is about the original Destiny, say that instead of presenting it as Destiny 2.
 - When asked what pairs with a weapon, only suggest something from a different slot. A Heavy weapon cannot pair with another Heavy weapon. If the rotation rows name a specific pairing, quote that pairing instead of inventing one.
 - Answer the category that was asked. A question about exotic weapons must not be answered with exotic armour or subclass perks; if no weapon fits the evidence, say so.
-- The class item combination list is unordered unless a rating is given. Never crown one as "best"; present the pairings that fit the request and say the list is not ranked.
+- The class item combination list is unordered unless a rating is given. Never call one combination "best", "top", "closest", "strongest" or "most useful", and never rank, number or shortlist them. Present the pairings that fit the request and say the list is not ranked.
+- Questions about Xur, weekly rotation, vendor stock or another live state are Destiny 2 questions. Say the data is not live, name the handoff tool, and never refuse them as off-topic.
 - If the evidence lists several exotics for a class, summarise three to five of them with a one-line effect each. Do not answer a broad "what exotic for X" question with a single item.
 - Every weapon and exotic armour row carries a "Source:" line from Bungie's data. Use it verbatim when explaining how to get something.
 - If the GAME DATA contains an "Acquisition:" block, use those sentences verbatim. Do not work out pack ownership yourself.
@@ -106,10 +107,17 @@ function toolUrl(kind: string, meta: Record<string, string>): string {
   return "https://www.bungie.net/7/en/Destiny/NewLight";
 }
 
+export type TokenUsage = {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+};
+
 export type Answer = {
   answer: string;
   sources: AnswerSource[];
   dataVersion: string;
+  usage: TokenUsage;
 };
 
 function formatSources(hits: GuideHit[]): string {
@@ -122,7 +130,9 @@ function formatSources(hits: GuideHit[]): string {
     .join("\n\n");
 }
 
-async function chat(messages: Array<{ role: string; content: string }>): Promise<string> {
+async function chat(
+  messages: Array<{ role: string; content: string }>,
+): Promise<{ content: string; usage: TokenUsage }> {
   for (const candidate of [model, fallbackModel].filter(Boolean)) {
     for (let tries = 1; tries <= 3; tries++) {
       const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -134,8 +144,20 @@ async function chat(messages: Array<{ role: string; content: string }>): Promise
       if (response.ok) {
         const body = (await response.json()) as {
           choices: Array<{ message: { content: string } }>;
+          usage?: {
+            prompt_tokens?: number;
+            completion_tokens?: number;
+            total_tokens?: number;
+          };
         };
-        return body.choices[0]?.message.content ?? "";
+        return {
+          content: body.choices[0]?.message.content ?? "",
+          usage: {
+            promptTokens: body.usage?.prompt_tokens ?? 0,
+            completionTokens: body.usage?.completion_tokens ?? 0,
+            totalTokens: body.usage?.total_tokens ?? 0,
+          },
+        };
       }
 
       if (response.status < 500 || tries === 3) break;
@@ -300,6 +322,11 @@ ${history}`
 
 export async function answerQuestion(question: string, limit = 5, history = ""): Promise<Answer> {
   const prepared = await prepareAnswer(question, limit, history);
-  const answer = await chat(prepared.messages);
-  return { answer, sources: prepared.sources, dataVersion: prepared.dataVersion };
+  const result = await chat(prepared.messages);
+  return {
+    answer: result.content,
+    sources: prepared.sources,
+    dataVersion: prepared.dataVersion,
+    usage: result.usage,
+  };
 }

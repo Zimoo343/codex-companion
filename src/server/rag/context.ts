@@ -87,6 +87,9 @@ async function queryFamilies(
         `Sustained damage by frame (typical_bdps, realistic):\n${describe(sustained.rows)}`,
       );
       sections.push(`Frame analysis notes:\n${describe(notes.rows)}`);
+      sections.push(
+        "Answer rule: state both the burst (one magazine) result and the sustained (typical) result. Do not give a single pick without both labels.",
+      );
     }
 
     const origins: Origin[] = sections.length
@@ -281,6 +284,72 @@ async function queryExoticWeapons(
   }
 }
 
+// "Pair it with..." follow-ups need a different ammo slot. Without an explicit
+// list the model reaches for another heavy weapon, which is impossible in game.
+async function queryPairing(context: string): Promise<{ text: string; origins: Origin[] }> {
+  if (!/\bpair|pairing\b|with it\b/i.test(context)) return { text: "", origins: [] };
+
+  const { pool } = createDatabase();
+  try {
+    const anchor = await pool.query<{
+      name: string;
+      ammo_type: string;
+      type: string;
+      damage_type: string;
+    }>(
+      `select name, ammo_type, type, damage_type from weapons
+        where length(name) > 3 and position(lower(name) in lower($1)) > 0
+        order by length(name) desc
+        limit 1`,
+      [context],
+    );
+    const weapon = anchor.rows[0];
+    if (!weapon) return { text: "", origins: [] };
+
+    const alternatives =
+      weapon.ammo_type === "Heavy"
+        ? ["Special", "Primary"]
+        : weapon.ammo_type === "Special"
+          ? ["Heavy", "Primary"]
+          : ["Heavy", "Special"];
+
+    const options = await pool.query<{
+      name: string;
+      type: string;
+      damage_type: string;
+      ammo_type: string;
+      tier: string;
+      source: string;
+    }>(
+      `select w.name, w.type, w.damage_type, w.ammo_type, a.tier, w.source
+         from weapons w
+         join aegis_weapons a on lower(a.name) = lower(w.name)
+        where w.ammo_type = any($1::text[]) and a.tier in ('S', 'A', 'B')
+        order by w.ammo_type, case a.tier when 'S' then 0 when 'A' then 1 else 2 end, w.name
+        limit 12`,
+      [alternatives],
+    );
+
+    const lines = options.rows.map(
+      (row) =>
+        `${row.name} (${row.ammo_type} ${row.damage_type} ${row.type}, ${row.tier} tier): ${row.source || "source not stated"}`,
+    );
+
+    return {
+      text: `Pairing anchor: ${weapon.name} is ${weapon.ammo_type} ammo (${weapon.damage_type} ${weapon.type}). It cannot pair with another ${weapon.ammo_type} weapon. Pair it with ${alternatives.join(" or ")} ammo.\nDifferent-slot options:\n${lines.length > 0 ? lines.join("\n") : "none listed"}`,
+      origins: [
+        {
+          title: "Pairing options",
+          sourceName: "Bungie manifest",
+          url: "https://www.bungie.net",
+        },
+      ],
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 // Exotic class items and builds were missing entirely: a class item rolls two Spirit
 // perks, so a single perk row never answers "which combos exist".
 async function queryClassItems(
@@ -309,7 +378,7 @@ async function queryClassItems(
       );
       if (combos.rows.length > 0) {
         sections.push(
-          `Exotic class item combinations:\n${combos.rows
+          `Exotic class item combinations (unordered; the sheet does not rate them). Do not rank, shortlist or call any of these best; state that the list is unordered.\n${combos.rows
             .map((row) => `${row.class}: ${row.trait_one} + ${row.trait_two}`)
             .join("\n")}`,
         );
@@ -774,6 +843,7 @@ export async function buildStructuredContext(
     querySheets(intent),
     queryRotations(intent),
     queryExoticWeapons(intent, context),
+    queryPairing(context),
     queryClassItems(intent, context),
     queryArmorForClass(context),
     queryArmorSets(intent),
