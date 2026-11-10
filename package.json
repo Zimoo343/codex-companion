@@ -24,7 +24,8 @@
     "eval:answers": "node --env-file=.env.local src/server/rag/eval-answers.ts",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "live:refresh": "node --env-file-if-exists=.env.local src/server/live/refresh.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
