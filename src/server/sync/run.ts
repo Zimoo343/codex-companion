@@ -62,12 +62,16 @@ async function syncManifest() {
   console.log(`manifest ${version}: ${(zip.length / 1e6).toFixed(0)}MB downloaded`);
 
   await db.transaction(async (tx) => {
+    await tx.delete(schema.milestones);
+    await tx.delete(schema.vendorGroups);
     await tx.delete(schema.armorSets);
     await tx.delete(schema.weapons);
     await tx.delete(schema.armor);
     await tx.delete(schema.subclassPlugs);
     await tx.delete(schema.activities);
 
+    await insertAll(bundle.milestones, (chunk) => tx.insert(schema.milestones).values(chunk));
+    await insertAll(bundle.vendorGroups, (chunk) => tx.insert(schema.vendorGroups).values(chunk));
     await insertAll(bundle.armorSets, (chunk) => tx.insert(schema.armorSets).values(chunk));
     await insertAll(bundle.weapons, (chunk) => tx.insert(schema.weapons).values(chunk));
     await insertAll(bundle.armor, (chunk) => tx.insert(schema.armor).values(chunk));
@@ -89,6 +93,8 @@ async function syncManifest() {
         weapons: bundle.weapons.length,
         armor: bundle.armor.length,
         armorSets: bundle.armorSets.length,
+        milestones: bundle.milestones.length,
+        vendorGroups: bundle.vendorGroups.length,
         plugs: bundle.plugs.length,
         activities: bundle.activities.length,
         seconds: Math.round((Date.now() - started) / 1000),

@@ -48,8 +48,13 @@ export type ArmorSetRow = {
   bonuses: Array<{ pieces: number; perk: string; description: string }>;
 };
 
+export type MilestoneRow = { hash: string; name: string; order: number; type: number };
+export type VendorGroupRow = { hash: string; name: string; order: number };
+
 export type ManifestBundle = {
   version: string;
+  milestones: MilestoneRow[];
+  vendorGroups: VendorGroupRow[];
   armorSets: ArmorSetRow[];
   weapons: WeaponRow[];
   armor: ArmorRow[];
@@ -294,6 +299,40 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
     armorSets.push({ hash: String(set.hash), name, pieces, bonuses });
   }
 
+  // Static names for hashes the live endpoints return.
+  const milestones: MilestoneRow[] = [];
+  for (const milestone of readAll<{
+    hash: number;
+    displayProperties?: { name?: string };
+    milestoneType?: number;
+    defaultOrder?: number;
+    redacted?: boolean;
+  }>(manifestDb, "DestinyMilestoneDefinition")) {
+    const name = milestone.displayProperties?.name;
+    if (!name || milestone.redacted) continue;
+    milestones.push({
+      hash: String(milestone.hash),
+      name,
+      order: milestone.defaultOrder ?? 0,
+      type: milestone.milestoneType ?? 0,
+    });
+  }
+
+  const vendorGroups: VendorGroupRow[] = [];
+  for (const group of readAll<{
+    hash: number;
+    categoryName?: string;
+    order?: number;
+    redacted?: boolean;
+  }>(manifestDb, "DestinyVendorGroupDefinition")) {
+    if (!group.categoryName || group.redacted) continue;
+    vendorGroups.push({
+      hash: String(group.hash),
+      name: group.categoryName,
+      order: group.order ?? 0,
+    });
+  }
+
   const typeNames = new Map<number, string>();
   for (const type of readAll<{ hash: number; displayProperties?: { name?: string } }>(
     manifestDb,
@@ -333,6 +372,8 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
 
   return {
     version,
+    milestones,
+    vendorGroups,
     armorSets,
     weapons: dedupeWeapons(weapons),
     armor,

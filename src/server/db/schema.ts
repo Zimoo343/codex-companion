@@ -169,6 +169,21 @@ export const sheetRows = pgTable(
   (table) => [index("sheet_rows_source_tab_idx").on(table.source, table.tab)],
 );
 
+// Milestone and vendor-group definitions give human names to the hashes that the live
+// endpoints return. They are static manifest data, refreshed with the manifest.
+export const milestones = pgTable("milestones", {
+  hash: varchar("hash", { length: 20 }).primaryKey(),
+  name: text("name").notNull(),
+  order: integer("order").notNull().default(0),
+  type: integer("type").notNull().default(0),
+});
+
+export const vendorGroups = pgTable("vendor_groups", {
+  hash: varchar("hash", { length: 20 }).primaryKey(),
+  name: text("name").notNull(),
+  order: integer("order").notNull().default(0),
+});
+
 // Armour sets carry 2-piece and 4-piece bonuses, which is what players mean by
 // "what does this set do".
 export const armorSets = pgTable(
