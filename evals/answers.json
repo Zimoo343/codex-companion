@@ -272,5 +272,26 @@
     "question": "what did zavala bring on reset today?",
     "expectFacts": ["player login|not available|can't see|cannot see|not live"],
     "forbid": ["zavala is selling"]
+  },
+  {
+    "id": "europa-armour-loop",
+    "trap": "naming a single vendor source for a destination set",
+    "question": "where do I get europa armour set?",
+    "expectFacts": ["public event|patrol|lost sector"],
+    "forbid": ["banshee", "eververse"]
+  },
+  {
+    "id": "distortion-loot-tier",
+    "trap": "truncating the destination loot loop to one activity",
+    "question": "how do I farm tier 5 armour on nessus?",
+    "expectFacts": ["lost sector", "distort"],
+    "forbid": ["neomuna", "pale heart"]
+  },
+  {
+    "id": "master-portal-vs-lost-sector",
+    "trap": "applying the Portal tier table to lost sectors",
+    "question": "what tier is master in the portal?",
+    "expectFacts": ["tier 4"],
+    "forbid": ["master is tier 5"]
   }
 ]

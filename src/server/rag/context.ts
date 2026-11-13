@@ -2,6 +2,7 @@ import { detectIntent, type QuestionIntent } from "./intent.ts";
 import { createDatabase } from "../db/client.ts";
 import { currentStatLine } from "../../lib/stats.ts";
 import { getRotation, getXur } from "../live/bungie.ts";
+import playerNotes from "../data/player-notes.json" with { type: "json" };
 
 type Row = Record<string, unknown>;
 
@@ -866,6 +867,29 @@ async function queryAcquisition(question: string): Promise<{ text: string; origi
   }
 }
 
+// Player knowledge that no official source states: how farming actually works in
+// practice. Kept separate from Bungie data so an answer can label it as such.
+function queryPlayerNotes(question: string): { text: string; origins: Origin[] } {
+  const lower = question.toLowerCase();
+  const matched = playerNotes.notes.filter((note) =>
+    note.matches.some((keyword) => lower.includes(keyword)),
+  );
+  if (matched.length === 0) return { text: "", origins: [] };
+
+  return {
+    text: `Player-verified notes (not Bungie data, from ${playerNotes.contributor}, reviewed ${playerNotes.reviewedAt}):\n${matched
+      .map((note) => `- ${note.text}`)
+      .join("\n")}`,
+    origins: [
+      {
+        title: "Player-verified notes",
+        sourceName: playerNotes.contributor,
+        url: "https://github.com/Zimoo343/codex-companion",
+      },
+    ],
+  };
+}
+
 export async function buildStructuredContext(
   question: string,
   history = "",
@@ -895,6 +919,8 @@ export async function buildStructuredContext(
     queryExpansions(context),
     queryAcquisition(context),
   ]);
+
+  parts.push(queryPlayerNotes(context));
 
   const origins: Origin[] = [];
   for (const part of parts) {

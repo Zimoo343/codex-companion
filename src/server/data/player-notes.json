@@ -1,0 +1,56 @@
+{
+  "reviewedAt": "2026-11-10",
+  "contributor": "project owner, player-verified",
+  "notes": [
+    {
+      "id": "distortion-rotation",
+      "matches": [
+        "distortion",
+        "distorted",
+        "patrol",
+        "destination",
+        "public event",
+        "lost sector"
+      ],
+      "text": "Distortions rotate through seven destinations, one per hour, in this order: Cosmodrome, EDZ, Dreaming City, Throne World, Moon, Europa, Nessus, then back to Cosmodrome. Neptune, Kepler, the Pale Heart and the Lawless Frontier are never distorted, because their gear is already current and the Lawless Frontier is not a patrol space. The distorted destination is the one with the red glow on the Director."
+    },
+    {
+      "id": "distortion-loot",
+      "matches": [
+        "distortion",
+        "distorted",
+        "tier 5",
+        "tier five",
+        "gear tier",
+        "patrol",
+        "public event"
+      ],
+      "text": "During a distortion the destination's rewards improve by one tier, which makes the distorted hour the best time to farm that planet. Public events are the baseline loop, and a Heroic public event on a distorted destination guarantees Tier 5 gear."
+    },
+    {
+      "id": "destination-armor-sources",
+      "matches": [
+        "armour set",
+        "armor set",
+        "europa",
+        "nessus",
+        "cosmodrome",
+        "edz",
+        "dreaming city",
+        "throne world",
+        "moon"
+      ],
+      "text": "Destination armour sets are earned by playing that destination: patrol, public events, lost sectors and its unique activity. The set is not tied to one exact event, so describe the destination loop rather than inventing a single source."
+    },
+    {
+      "id": "lost-sector-tiers",
+      "matches": ["lost sector", "tier 5", "tier five", "master", "expert", "farm"],
+      "text": "Lost sectors have their own difficulty-to-tier mapping, separate from Portal activities. A Master lost sector on a destination guarantees a Tier 5 armour piece from that destination's set, plus a weapon, and runs take about two to three minutes. Expert lost sectors only award Tier 4, so Master is the one to farm. Master lost sectors scale, but reaching 450+ Power makes Tier 5 drops noticeably more consistent elsewhere too."
+    },
+    {
+      "id": "portal-difficulty-tiers",
+      "matches": ["portal", "grandmaster", "master", "difficulty", "tier 4", "tier 5", "nightfall"],
+      "text": "The Portal difficulty table is separate from lost sectors: Normal C is Tier 1, Advanced B is Tier 2, Expert A is Tier 3, Master A+ is Tier 4, Grandmaster S is Tier 5 and Ultimate S+ is Tier 5. Crucible modes at Grade A or higher also yield Tier 5. Do not apply the Portal table to lost sectors."
+    }
+  ]
+}

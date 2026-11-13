@@ -1,4 +1,5 @@
 import { ingestAnnouncements } from "./ingest-announcements.ts";
+import { ingestArticles } from "./ingest-articles.ts";
 import { ingestEntities } from "./ingest-entities.ts";
 import { ingestWiki } from "./ingest-wiki.ts";
 
@@ -9,6 +10,12 @@ const limit = limitFlag > 0 ? Number(process.argv[limitFlag + 1]) : undefined;
 
 if (target === "announcements") {
   const result = await ingestAnnouncements({ dryRun });
+  console.log(
+    `documents ${result.documents}, chunks ${result.chunks}, ` +
+      `embedded ${result.embedded}, skipped ${result.skipped}`,
+  );
+} else if (target === "articles") {
+  const result = await ingestArticles({ dryRun });
   console.log(
     `documents ${result.documents}, chunks ${result.chunks}, ` +
       `embedded ${result.embedded}, skipped ${result.skipped}`,
