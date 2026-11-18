@@ -481,5 +481,17 @@
     "forbid": [
       "works with any melee"
     ]
+  },
+  {
+    "id": "spirit-vs-exotic-cyrtarachne",
+    "trap": "class item Spirit confused with the exotic helmet",
+    "question": "is spirit of cyrtarachne the same as cyrtarachne's facade?",
+    "expectFacts": [
+      "grapple",
+      "grenade"
+    ],
+    "forbid": [
+      "identical"
+    ]
   }
 ]

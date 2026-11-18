@@ -66,7 +66,12 @@
     {
       "id": "spirit-vs-exotic-general",
       "matches": ["spirit of", "class item", "renewal", "duskfield", "point-contact"],
-      "text": "Exotic class item Spirits and the exotic armour pieces they are named after are different items with different triggers. Spirit of Contact works with any melee, while Point-Contact Cannon Brace refunds only on Thunderclap. Spirit of Renewal grants damage resistance on any grenade throw, while Renewal Grasps only affects Duskfield Grenades. On Prismatic the Spirit version is usually the broader one; never describe them as the same effect."
+      "text": "Exotic class item Spirits and the exotic armour pieces they are named after are different items with different triggers. Spirit of Contact works with any melee, while Point-Contact Cannon Brace refunds only on Thunderclap. Spirit of Renewal still only works inside a Duskfield grenade field, exactly like Renewal Grasps. Do not assume a Spirit is broader: check the Spirit's own text."
+    },
+    {
+      "id": "spirit-cyrtarachne",
+      "matches": ["cyrtarachne", "woven mail", "grenade", "prismatic", "hunter"],
+      "text": "Cyrtarachne's Facade, the Hunter helmet, has the perk Acrobat's Focus: activating a Grapple grants Woven Mail. Spirit of Cyrtarachne on an exotic class item instead grants Woven Mail whenever you use your grenade, any grenade. They are different triggers and the Spirit is the broader one. Pairing Spirit of Cyrtarachne with Spirit of Renewal is a damage-resistance combo: Renewal covers the Duskfield field, Cyrtarachne covers the grenade use itself."
     }
   ]
 }
