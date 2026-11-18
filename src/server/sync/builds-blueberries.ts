@@ -104,6 +104,91 @@ const splitList = (value: string): string[] =>
     .map((entry) => entry.trim().replace(/\.$/, ""))
     .filter((entry) => entry.length > 0 && entry.length < 60);
 
+// The page's "Abilities" field sometimes runs on into the Mods section, so mod names
+// (Heavy Ammo Finder, Impact Induction) end up listed as abilities. Only entries that
+// name a real ability survive.
+const ABILITY =
+  /\b(dodge|melee|grenade|super|rift|barrier|spike|needle|bomb|grapple|shiver|smoke|hammer|shield|sentinel|golden gun|nova|stormtrance|thundercrash|well|daybreak|maul|fists|quake|barrage|squall|storm|needlestorm|song|twilight|bolt|snare|tether|knife|staff|dive|pulse|wave|class ability)\b/i;
+
+// Aspect and fragment cells carry editorial asides: "(to equip 5 Fragments)",
+// "is the only required aspect", "The last Fragment is up to you". Keep the names only.
+export const cleanNames = (value: string): string[] =>
+  value
+    .replace(/\([^)]*\)?/g, " ")
+    .split(/\.\s+/)
+    .flatMap((sentence) => splitList(sentence))
+    .flatMap((entry) => entry.split(/\s+\+\s+/))
+    .map((entry) => {
+      let name = entry.split(/\s+(is|are)\s+/i)[0] ?? entry;
+      while (/^(and|or|either|the)\s+/i.test(name)) {
+        name = name.replace(/^(and|or|either|the)\s+/i, "");
+      }
+      return name
+        .replace(/\s+/g, " ")
+        .replace(/[\s.,;:]+$/, "")
+        .trim();
+    })
+    .filter(
+      (entry) =>
+        /^[A-Z]/.test(entry) &&
+        entry.length < 45 &&
+        !/\b(is|are|equip|required|up to you|fun|content|instead|choose|last)\b/i.test(entry),
+    );
+
+export const abilityList = (value: string): string[] =>
+  value
+    .replace(/Silence and Squall/gi, "Silence & Squall")
+    .split(/\.\s+/)
+    .flatMap((sentence) => splitList(sentence))
+    .map((entry) =>
+      /^either dodge works$/i.test(entry)
+        ? "Gambler’s Dodge or Marksman’s Dodge"
+        : ({
+            Squall: "Silence & Squall",
+            "Storm Grenades": "Storm Grenade",
+          }[entry] ?? entry),
+    )
+    .map((entry) =>
+      entry
+        .replace(/\s+for Super$/i, "")
+        .replace(/^(and|or|either|a|an)\s+/i, "")
+        .replace(/[\s.,;:]+$/, "")
+        .trim(),
+    )
+    .filter(
+      (entry) =>
+        entry.length > 2 &&
+        entry.length < 45 &&
+        ABILITY.test(entry) &&
+        !/\b(is|are|better|fun|recommended|content|instead|works|choice|your)\b/i.test(entry),
+    );
+
+// Mods arrive as "Helmet : X , Y . Arms : Z", so keep the slot with each entry instead
+// of flattening them into one anonymous list.
+const MOD_SLOTS = ["Helmet", "Arms", "Chest", "Legs", "Class Item"];
+
+export function parseMods(value: string): string {
+  const text = value.replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  const parts: string[] = [];
+  for (const slot of MOD_SLOTS) {
+    const match = new RegExp(`${slot}\\s*:`, "i").exec(text);
+    if (!match) continue;
+    const rest = text.slice(match.index + match[0].length);
+    let end = rest.length;
+    for (const other of MOD_SLOTS) {
+      const next = new RegExp(`${other}\\s*:`, "i").exec(rest);
+      if (next && next.index < end) end = next.index;
+    }
+    const mods = rest
+      .slice(0, end)
+      .replace(/[\s.,;:]+$/, "")
+      .trim();
+    if (mods) parts.push(`${slot.toLowerCase()}: ${mods}`);
+  }
+  return parts.join("; ").slice(0, 600);
+}
+
 // Subclass is implied by the perks, not by the page URL: one "prismatic" page also
 // carries Solar and Strand builds.
 function inferSubclass(fragments: string[], aspects: string[]): string {
@@ -155,8 +240,8 @@ export function parseBuildsPage(html: string, pageUrl: string): ParsedBuild[] {
     );
     if (exotics.length === 0) return;
 
-    const aspects = splitList(field(text, "Aspects", ["Fragments"]));
-    const fragments = splitList(field(text, "Fragments", ["Abilities"]));
+    const aspects = cleanNames(field(text, "Aspects", ["Fragments"]));
+    const fragments = cleanNames(field(text, "Fragments", ["Abilities"]));
 
     builds.push({
       name: heading.title.replace(/\s+/g, " ").trim(),
@@ -168,12 +253,15 @@ export function parseBuildsPage(html: string, pageUrl: string): ParsedBuild[] {
       requires: field(gearText, "Requires", ["Exotic Perk"]),
       aspects,
       fragments,
-      abilities: splitList(field(text, "Abilities", ["Stats"])),
+      abilities: abilityList(
+        field(text, "Abilities", ["Stats", "Mods", "Gameplay Loop", "Weapons", "Armor Mods"]),
+      ),
       stats: cleanStats(field(text, "Stats", ["Mods"])),
-      mods:
+      mods: parseMods(
         field(text, "Mods", FIELDS)
           .split(/Gameplay Loop/i)[0]
           ?.trim() ?? "",
+      ),
       url: pageUrl,
     });
   });

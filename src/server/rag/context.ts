@@ -480,16 +480,15 @@ async function queryCommunityBuilds(
   const { pool } = createDatabase();
   try {
     const result = await pool.query(
-      `select name, class, subclass, exotics, aspects, fragments, abilities, stats, requires, source, source_url
+      `select name, class, subclass, exotics, aspects, fragments, abilities, stats, mods, requires, source, source_url
          from community_builds
         where ($1::text is null or lower(class) = $1)
           and (cardinality($2::text[]) = 0 or lower(subclass) = any($2))
-        order by random()
+        order by name
         limit 5`,
       [namedClass ?? null, subclasses],
     );
     if (result.rows.length === 0) return { text: "", origins: [] };
-
     // No stat synthesis: a build either states a current stat priority or it does not.
     // Guides from before the rework use retired stats, and guessing an order for them
     // produced confidently wrong advice.
@@ -502,7 +501,8 @@ async function queryCommunityBuilds(
       const stats = current
         ? `stat priority ${current}`
         : "no current stat priority stated (guide predates the Edge of Fate stat rework)";
-      return `${row.subclass} ${row.class} with ${exotics} (listed by ${row.source} as "${row.name}"): aspects ${aspects}; fragments ${fragments}; abilities ${abilities}; ${stats}; requires ${row.requires}`;
+      const mods = String(row.mods ?? "").trim();
+      return `${row.subclass} ${row.class} with ${exotics} (listed by ${row.source} as "${row.name}"): aspects ${aspects}; fragments ${fragments}; abilities ${abilities || "none listed"}; armour mods ${mods || "none listed"}; ${stats}; requires ${row.requires}`;
     });
 
     return {
