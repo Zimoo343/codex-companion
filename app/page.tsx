@@ -11,6 +11,7 @@ import {
   useChatStore,
   type ChatMessage,
 } from "./chat-store";
+import { copyText, sessionToMarkdown } from "./transcript";
 
 type AskResponse = {
   answer: string;
@@ -48,6 +49,7 @@ export default function Home() {
   const [gateError, setGateError] = useState("");
   const [gateChecking, setGateChecking] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [transcriptCopied, setTranscriptCopied] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -256,6 +258,20 @@ export default function Home() {
               <h1>Codex Companion</h1>
               <p>Destiny 2 answers, grounded in Bungie data and community spreadsheets.</p>
             </div>
+            {active && active.messages.length > 0 && (
+              <button
+                type="button"
+                className="copy-transcript"
+                onClick={async () => {
+                  const ok = await copyText(sessionToMarkdown(active));
+                  if (!ok) return;
+                  setTranscriptCopied(true);
+                  window.setTimeout(() => setTranscriptCopied(false), 1400);
+                }}
+              >
+                {transcriptCopied ? "Copied" : "Copy transcript"}
+              </button>
+            )}
           </header>
 
           <div className="messages">

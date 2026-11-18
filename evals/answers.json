@@ -293,5 +293,26 @@
     "question": "what tier is master in the portal?",
     "expectFacts": ["tier 4"],
     "forbid": ["master is tier 5"]
+  },
+  {
+    "id": "threadling-set-match",
+    "trap": "unrelated set offered for a Threadling build",
+    "question": "any armour set that helps threadlings?",
+    "expectFacts": ["flain"],
+    "forbid": ["crota's memory", "swordmaster"]
+  },
+  {
+    "id": "grenade-build-not-melee-set",
+    "trap": "melee set recommended to a grenade build",
+    "question": "what armour set suits a grenade warlock build?",
+    "expectFacts": ["grenade|threadling|flain"],
+    "forbid": ["cursed fist"]
+  },
+  {
+    "id": "ferropotent-source-not-invented",
+    "trap": "raid named as an armour set source",
+    "question": "where does the ferropotent armour set come from?",
+    "expectFacts": ["solo|fireteam|ops|not recorded"],
+    "forbid": ["deep stone crypt"]
   }
 ]

@@ -2,6 +2,7 @@ import { detectIntent, type QuestionIntent } from "./intent.ts";
 import { createDatabase } from "../db/client.ts";
 import { currentStatLine } from "../../lib/stats.ts";
 import { getRotation, getXur } from "../live/bungie.ts";
+import { queryArmorSets } from "./armor-sets.ts";
 import playerNotes from "../data/player-notes.json" with { type: "json" };
 
 type Row = Record<string, unknown>;
@@ -679,48 +680,6 @@ async function queryAccessibleWeapons(
   }
 }
 
-async function queryArmorSets(
-  intent: QuestionIntent,
-): Promise<{ text: string; origins: Origin[] }> {
-  if (!/\barmou?r sets?\b|set bonus|2.?piece|4.?piece/i.test(intent.phrases.join(" "))) {
-    return { text: "", origins: [] };
-  }
-
-  const { pool } = createDatabase();
-  try {
-    const patterns = intent.phrases.map((phrase) => `%${phrase}%`);
-    const named = await pool.query(
-      `select name, bonuses from armor_sets
-        where name ilike any($1)
-        limit 5`,
-      [patterns],
-    );
-
-    const rows =
-      named.rows.length > 0
-        ? named.rows
-        : (await pool.query(`select name, bonuses from armor_sets order by name limit 6`)).rows;
-
-    if (rows.length === 0) return { text: "", origins: [] };
-
-    const lines = rows.map((row) => {
-      const bonuses = (row.bonuses as Array<{ pieces: number; perk: string; description: string }>)
-        .map((bonus) => `${bonus.pieces}pc ${bonus.perk}: ${bonus.description}`)
-        .join(" ");
-      return `${row.name}: ${bonuses}`;
-    });
-
-    return {
-      text: `Armour sets and their bonuses:\n${lines.join("\n")}`,
-      origins: [
-        { title: "Armour sets", sourceName: "Bungie manifest", url: "https://www.bungie.net" },
-      ],
-    };
-  } finally {
-    await pool.end();
-  }
-}
-
 async function queryArmorForClass(question: string): Promise<{ text: string; origins: Origin[] }> {
   const namedClass = /\b(hunter|titan|warlock)\b/i.exec(question)?.[1]?.toLowerCase();
   const asksArmor = /\bexotic|armor|helmet|gauntlet|chest|leg|class item\b/i.test(question);
@@ -911,7 +870,7 @@ export async function buildStructuredContext(
     queryPairing(context),
     queryClassItems(intent, context),
     queryArmorForClass(context),
-    queryArmorSets(intent),
+    queryArmorSets(intent, context),
     queryCommunityBuilds(context),
     queryAccessibleWeapons(intent, context),
     queryStatSystem(context),

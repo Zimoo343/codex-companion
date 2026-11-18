@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { sanitizeAnswer } from "../../src/lib/answer-text.ts";
 import type { ChatMessage } from "../chat-store";
+import { copyText, messageToMarkdown } from "../transcript";
 
 function Sources({ message, id }: { message: ChatMessage; id: string }) {
   if (!message.sources || message.sources.length === 0) return null;
@@ -26,6 +27,7 @@ function Sources({ message, id }: { message: ChatMessage; id: string }) {
 
 export function Message({ message }: { message: ChatMessage }) {
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const sourcesId = `sources-${message.id}`;
   const sourceCount = message.sources?.length ?? 0;
 
@@ -65,22 +67,38 @@ export function Message({ message }: { message: ChatMessage }) {
           {sanitizeAnswer(message.text)}
         </ReactMarkdown>
 
-        {sourceCount > 0 && (
+        <div className="bubble-actions">
+          {sourceCount > 0 && (
+            <button
+              type="button"
+              className="refs-toggle"
+              aria-expanded={sourcesOpen}
+              aria-controls={sourcesId}
+              onClick={() => setSourcesOpen((open) => !open)}
+            >
+              <span
+                className={`refs-chevron${sourcesOpen ? " refs-chevron-open" : ""}`}
+                aria-hidden="true"
+              />
+              References
+              <span className="refs-count">{sourceCount}</span>
+            </button>
+          )}
+
           <button
             type="button"
-            className="refs-toggle"
-            aria-expanded={sourcesOpen}
-            aria-controls={sourcesId}
-            onClick={() => setSourcesOpen((open) => !open)}
+            className="copy-answer"
+            aria-label={copied ? "Copied" : "Copy answer"}
+            onClick={async () => {
+              const ok = await copyText(messageToMarkdown(message));
+              if (!ok) return;
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1200);
+            }}
           >
-            <span
-              className={`refs-chevron${sourcesOpen ? " refs-chevron-open" : ""}`}
-              aria-hidden="true"
-            />
-            References
-            <span className="refs-count">{sourceCount}</span>
+            {copied ? "Copied" : "Copy"}
           </button>
-        )}
+        </div>
 
         {sourcesOpen && <Sources message={message} id={sourcesId} />}
 
