@@ -51,6 +51,22 @@
       "id": "portal-difficulty-tiers",
       "matches": ["portal", "grandmaster", "master", "difficulty", "tier 4", "tier 5", "nightfall"],
       "text": "The Portal difficulty table is separate from lost sectors: Normal C is Tier 1, Advanced B is Tier 2, Expert A is Tier 3, Master A+ is Tier 4, Grandmaster S is Tier 5 and Ultimate S+ is Tier 5. Crucible modes at Grade A or higher also yield Tier 5. Do not apply the Portal table to lost sectors."
+    },
+    {
+      "id": "spirit-vs-exotic-contact",
+      "matches": [
+        "point-contact",
+        "point contact",
+        "spirit of contact",
+        "consecration",
+        "thunderclap"
+      ],
+      "text": "Point-Contact Cannon Brace is the Titan arms exotic and its melee refund only applies to Thunderclap. Spirit of Contact is an exotic class item perk and triggers on any melee, including the first wave of a partial Consecration animation with Frenzied Blade. They are different items with different triggers: a Consecration loop with Spirit of Contact works, the same loop with the arms exotic wastes the exotic."
+    },
+    {
+      "id": "spirit-vs-exotic-general",
+      "matches": ["spirit of", "class item", "renewal", "duskfield", "point-contact"],
+      "text": "Exotic class item Spirits and the exotic armour pieces they are named after are different items with different triggers. Spirit of Contact works with any melee, while Point-Contact Cannon Brace refunds only on Thunderclap. Spirit of Renewal grants damage resistance on any grenade throw, while Renewal Grasps only affects Duskfield Grenades. On Prismatic the Spirit version is usually the broader one; never describe them as the same effect."
     }
   ]
 }

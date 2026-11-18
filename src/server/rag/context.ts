@@ -3,6 +3,7 @@ import { createDatabase } from "../db/client.ts";
 import { currentStatLine } from "../../lib/stats.ts";
 import { getRotation, getXur } from "../live/bungie.ts";
 import { queryArmorSets } from "./armor-sets.ts";
+import { queryExoticTrigger } from "./exotic-trigger.ts";
 import playerNotes from "../data/player-notes.json" with { type: "json" };
 
 type Row = Record<string, unknown>;
@@ -877,6 +878,7 @@ export async function buildStructuredContext(
     queryLiveState(context),
     queryExpansions(context),
     queryAcquisition(context),
+    queryExoticTrigger(context),
   ]);
 
   parts.push(queryPlayerNotes(context));
