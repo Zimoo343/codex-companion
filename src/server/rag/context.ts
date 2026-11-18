@@ -3,6 +3,7 @@ import { createDatabase } from "../db/client.ts";
 import { currentStatLine } from "../../lib/stats.ts";
 import { getRotation, getXur } from "../live/bungie.ts";
 import { queryArmorSets } from "./armor-sets.ts";
+import { composeBuild } from "./build-composer.ts";
 import { queryExoticTrigger } from "./exotic-trigger.ts";
 import playerNotes from "../data/player-notes.json" with { type: "json" };
 
@@ -489,7 +490,7 @@ async function queryCommunityBuilds(
         limit 5`,
       [namedClass ?? null, subclasses],
     );
-    if (result.rows.length === 0) return { text: "", origins: [] };
+    if (result.rows.length === 0) return composeBuild(question);
     // No stat synthesis: a build either states a current stat priority or it does not.
     // Guides from before the rework use retired stats, and guessing an order for them
     // produced confidently wrong advice.

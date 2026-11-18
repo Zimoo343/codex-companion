@@ -19,9 +19,7 @@
     "id": "exotic-armour-vs-weapon",
     "trap": "exotic armour vs exotic weapon",
     "question": "What exotic armour should a Solar Warlock use in PvE?",
-    "expectFacts": [
-      "Starfire Protocol|Sunbracers|Phoenix Protocol|Dawn Chorus|Vesper of Radius"
-    ],
+    "expectFacts": ["Starfire Protocol|Sunbracers|Phoenix Protocol|Dawn Chorus|Vesper of Radius"],
     "forbid": [
       "Gjallarhorn",
       "Apex Predator",
@@ -37,13 +35,7 @@
     "expectFacts": [
       "Apex Predator|Gjallarhorn|Cataclysmic|Grand Overture|Dragon's Breath|Whisper of the Worm|machine gun|linear fusion|rocket|sword"
     ],
-    "forbid": [
-      "Izanagi's Burden",
-      "Succession",
-      "Heritage",
-      "Cartesian Coordinate",
-      "Cloudstrike"
-    ]
+    "forbid": ["Izanagi's Burden", "Succession", "Heritage", "Cartesian Coordinate", "Cloudstrike"]
   },
   {
     "id": "special-ammo-only",
@@ -71,20 +63,13 @@
       "class item|class-item",
       "not the same|different|not identical|separate"
     ],
-    "forbid": [
-      "yes, it is the same",
-      "yes they are the same",
-      "they are identical"
-    ]
+    "forbid": ["yes, it is the same", "yes they are the same", "they are identical"]
   },
   {
     "id": "spirit-perk-category",
     "trap": "Spirit perk is class-item only",
     "question": "Can I put Spirit of the Assassin on my Hunter's exotic helmet?",
-    "expectFacts": [
-      "Spirit of the Assassin|Assassin",
-      "class item"
-    ],
+    "expectFacts": ["Spirit of the Assassin|Assassin", "class item"],
     "forbid": [
       "yes, you can put",
       "exotic helmet perk",
@@ -96,24 +81,14 @@
     "id": "archive-not-free",
     "trap": "archive vs free",
     "question": "Is Anarchy free to play?",
-    "expectFacts": [
-      "Anarchy",
-      "archive|not free|requires|paid"
-    ],
-    "forbid": [
-      "yes, Anarchy is free",
-      "Anarchy is free to play",
-      "available for free"
-    ]
+    "expectFacts": ["Anarchy", "archive|not free|requires|paid"],
+    "forbid": ["yes, Anarchy is free", "Anarchy is free to play", "available for free"]
   },
   {
     "id": "archive-requires-pack",
     "trap": "archive vs free",
     "question": "I am free-to-play. Can I buy Witherhoard from the Exotic Archive?",
-    "expectFacts": [
-      "Witherhoard",
-      "archive|not free|purchase requirement|requires|pack"
-    ],
+    "expectFacts": ["Witherhoard", "archive|not free|purchase requirement|requires|pack"],
     "forbid": [
       "no purchase required",
       "does not require a pack",
@@ -125,9 +100,7 @@
     "id": "retired-stat-order",
     "trap": "retired stat names",
     "question": "A guide says 100 Resilience, 100 Discipline, 80 Recovery. What stat order should I run?",
-    "expectFacts": [
-      "retired|not current|outdated|no longer current"
-    ],
+    "expectFacts": ["retired|not current|outdated|no longer current"],
     "forbid": [
       "run 100 Resilience",
       "use 100 Resilience",
@@ -143,14 +116,7 @@
     "id": "retired-stat-names",
     "trap": "retired stat names",
     "question": "List the current armour stats in Destiny 2 and what they do.",
-    "expectFacts": [
-      "Health",
-      "Melee",
-      "Grenade",
-      "Super",
-      "Class",
-      "Weapons"
-    ],
+    "expectFacts": ["Health", "Melee", "Grenade", "Super", "Class", "Weapons"],
     "forbid": [
       "Resilience >",
       "Mobility >",
@@ -204,70 +170,37 @@
     "trap": "pair it follow-up",
     "question": "What should I pair it with?",
     "history": "Player: What is the best special ammo weapon for boss damage? Assistant: Succession is a Kinetic sniper rifle and a strong special option.",
-    "expectFacts": [
-      "heavy|power|rocket|machine gun|linear fusion|sword|grenade launcher"
-    ],
-    "forbid": [
-      "another sniper",
-      "second sniper",
-      "Izanagi's Burden",
-      "Heritage",
-      "Cloudstrike"
-    ]
+    "expectFacts": ["heavy|power|rocket|machine gun|linear fusion|sword|grenade launcher"],
+    "forbid": ["another sniper", "second sniper", "Izanagi's Burden", "Heritage", "Cloudstrike"]
   },
   {
     "id": "class-items-unranked",
     "trap": "class item combos are unranked",
     "question": "Which Spirit of the Caliban combos are best for a Prismatic Hunter?",
-    "expectFacts": [
-      "Spirit of Caliban",
-      "not ranked|unordered|no ranking"
-    ],
-    "forbid": [
-      "best combo is",
-      "best pairing is",
-      "top combo",
-      "ranked first",
-      "comes closest"
-    ]
+    "expectFacts": ["Spirit of Caliban", "not ranked|unordered|no ranking"],
+    "forbid": ["best combo is", "best pairing is", "top combo", "ranked first", "comes closest"]
   },
   {
     "id": "popularity-refusal",
     "trap": "no popularity data",
     "question": "What is the most popular exotic weapon in Destiny 2?",
-    "expectFacts": [
-      "no usage|does not track|do not track|not measured|no popularity|published by"
-    ],
-    "forbid": [
-      "most popular is",
-      "most used weapon is",
-      "usage rate",
-      "popularity is"
-    ],
+    "expectFacts": ["no usage|does not track|do not track|not measured|no popularity|published by"],
+    "forbid": ["most popular is", "most used weapon is", "usage rate", "popularity is"],
     "expectRefusal": "no_popularity"
   },
   {
     "id": "non-destiny-refusal",
     "trap": "out of scope",
     "question": "How do I center a div in CSS?",
-    "expectFacts": [
-      "Destiny 2"
-    ],
-    "forbid": [
-      "flexbox",
-      "margin auto",
-      "display grid"
-    ],
+    "expectFacts": ["Destiny 2"],
+    "forbid": ["flexbox", "margin auto", "display grid"],
     "expectRefusal": "not_destiny"
   },
   {
     "id": "live-state-refusal",
     "trap": "live state",
     "question": "What is Xur selling this week?",
-    "expectFacts": [
-      "Xur",
-      "inventory|selling|evidence|data"
-    ],
+    "expectFacts": ["Xur", "inventory|selling|evidence|data"],
     "forbid": [
       "Xur is selling this week:",
       "Xur is selling the following",
@@ -281,217 +214,133 @@
     "id": "historical-acquisition",
     "trap": "historical source",
     "question": "Where does Kindled Orchid drop?",
-    "expectFacts": [
-      "Kindled Orchid",
-      "Black Armory|historical|outdated|no longer|removed"
-    ],
-    "forbid": [
-      "still drops",
-      "currently drops from Black Armory",
-      "can be farmed",
-      "available now"
-    ]
+    "expectFacts": ["Kindled Orchid", "Black Armory|historical|outdated|no longer|removed"],
+    "forbid": ["still drops", "currently drops from Black Armory", "can be farmed", "available now"]
   },
   {
     "id": "build-expansion-requirement",
     "trap": "build requirements",
     "question": "How do I make a Prismatic Warlock build with Getaway Artist?",
-    "expectFacts": [
-      "Prismatic",
-      "Getaway Artist",
-      "Final Shape|requires|expansion"
-    ],
-    "forbid": [
-      "no expansion required",
-      "does not require Final Shape",
-      "free to play build"
-    ]
+    "expectFacts": ["Prismatic", "Getaway Artist", "Final Shape|requires|expansion"],
+    "forbid": ["no expansion required", "does not require Final Shape", "free to play build"]
   },
   {
     "id": "damage-assumption",
     "trap": "damage assumptions",
     "question": "What is the best rocket launcher for DPS?",
-    "expectFacts": [
-      "rocket|launcher",
-      "burst",
-      "sustained"
-    ],
-    "forbid": [
-      "guaranteed best",
-      "no assumptions"
-    ]
+    "expectFacts": ["rocket|launcher", "burst", "sustained"],
+    "forbid": ["guaranteed best", "no assumptions"]
   },
   {
     "id": "live-rotation",
     "trap": "live weekly milestones",
     "question": "what is on rotation this week?",
-    "expectFacts": [
-      "week|weekly|rotation|reset"
-    ],
-    "forbid": [
-      "not live",
-      "I do not have"
-    ]
+    "expectFacts": ["week|weekly|rotation|reset"],
+    "forbid": ["not live", "I do not have"]
   },
   {
     "id": "live-xur-absent",
     "trap": "Xur outside his window",
     "question": "what is xur selling right now?",
-    "expectFacts": [
-      "not in town|next refresh|vendor refresh|not selling"
-    ],
-    "forbid": [
-      "I do not have live data"
-    ]
+    "expectFacts": ["not in town|next refresh|vendor refresh|not selling"],
+    "forbid": ["I do not have live data"]
   },
   {
     "id": "vog-is-free",
     "trap": "free activity attributed to an expansion",
     "question": "does Vault of Glass need Beyond Light?",
-    "expectFacts": [
-      "free"
-    ],
-    "forbid": [
-      "beyond light"
-    ]
+    "expectFacts": ["free"],
+    "forbid": ["beyond light"]
   },
   {
     "id": "live-dates-readable",
     "trap": "raw ISO timestamps in a live answer",
     "question": "do you know when xur is coming?",
-    "expectFacts": [
-      "friday|next vendor refresh|returns"
-    ],
-    "forbid": [
-      "t09:",
-      "t17:",
-      "z."
-    ]
+    "expectFacts": ["friday|next vendor refresh|returns"],
+    "forbid": ["t09:", "t17:", "z."]
   },
   {
     "id": "capability-honest",
     "trap": "overstating live vendor coverage",
     "question": "what can I ask you?",
-    "expectFacts": [
-      "weekly milestones|xur"
-    ],
-    "forbid": [
-      "live vendor stock"
-    ]
+    "expectFacts": ["weekly milestones|xur"],
+    "forbid": ["live vendor stock"]
   },
   {
     "id": "vendor-needs-login",
     "trap": "regular vendor stock without OAuth",
     "question": "what did zavala bring on reset today?",
-    "expectFacts": [
-      "player login|not available|can't see|cannot see|not live"
-    ],
-    "forbid": [
-      "zavala is selling"
-    ]
+    "expectFacts": ["player login|not available|can't see|cannot see|not live"],
+    "forbid": ["zavala is selling"]
   },
   {
     "id": "europa-armour-loop",
     "trap": "naming a single vendor source for a destination set",
     "question": "where do I get europa armour set?",
-    "expectFacts": [
-      "public event|patrol|lost sector"
-    ],
-    "forbid": [
-      "banshee",
-      "eververse"
-    ]
+    "expectFacts": ["public event|patrol|lost sector"],
+    "forbid": ["banshee", "eververse"]
   },
   {
     "id": "distortion-loot-tier",
     "trap": "truncating the destination loot loop to one activity",
     "question": "how do I farm tier 5 armour on nessus?",
-    "expectFacts": [
-      "lost sector",
-      "distort"
-    ],
-    "forbid": [
-      "neomuna",
-      "pale heart"
-    ]
+    "expectFacts": ["lost sector", "distort"],
+    "forbid": ["neomuna", "pale heart"]
   },
   {
     "id": "master-portal-vs-lost-sector",
     "trap": "applying the Portal tier table to lost sectors",
     "question": "what tier is master in the portal?",
-    "expectFacts": [
-      "tier 4"
-    ],
-    "forbid": [
-      "master is tier 5"
-    ]
+    "expectFacts": ["tier 4"],
+    "forbid": ["master is tier 5"]
   },
   {
     "id": "threadling-set-match",
     "trap": "unrelated set offered for a Threadling build",
     "question": "any armour set that helps threadlings?",
-    "expectFacts": [
-      "flain"
-    ],
-    "forbid": [
-      "crota's memory",
-      "swordmaster"
-    ]
+    "expectFacts": ["flain"],
+    "forbid": ["crota's memory", "swordmaster"]
   },
   {
     "id": "grenade-build-not-melee-set",
     "trap": "melee set recommended to a grenade build",
     "question": "what armour set suits a grenade warlock build?",
-    "expectFacts": [
-      "grenade|threadling|flain"
-    ],
-    "forbid": [
-      "cursed fist"
-    ]
+    "expectFacts": ["grenade|threadling|flain"],
+    "forbid": ["cursed fist"]
   },
   {
     "id": "ferropotent-source-not-invented",
     "trap": "raid named as an armour set source",
     "question": "where does the ferropotent armour set come from?",
-    "expectFacts": [
-      "solo|fireteam|ops|not recorded"
-    ],
-    "forbid": [
-      "deep stone crypt"
-    ]
+    "expectFacts": ["solo|fireteam|ops|not recorded"],
+    "forbid": ["deep stone crypt"]
   },
   {
     "id": "new-player-tone",
     "trap": "build sheet dumped on a new player",
     "question": "i just started, whats a good strand warlock build?",
-    "expectFacts": [
-      "strand|swarmers"
-    ],
-    "forbid": [
-      "thread of"
-    ]
+    "expectFacts": ["strand|swarmers"],
+    "forbid": ["thread of"]
+  },
+  {
+    "id": "composed-build-labelled",
+    "trap": "synthesised build passed off as a published one",
+    "question": "any build for void warlock?",
+    "expectFacts": ["composed"],
+    "forbid": ["blueberries.gg lists"]
   },
   {
     "id": "exotic-trigger-mismatch",
     "trap": "exotic paired with the wrong melee",
     "question": "any build using point contact cannon brace for titan using prismatic?",
-    "expectFacts": [
-      "thunderclap"
-    ],
-    "forbid": [
-      "works with any melee"
-    ]
+    "expectFacts": ["thunderclap"],
+    "forbid": ["works with any melee"]
   },
   {
     "id": "spirit-vs-exotic-cyrtarachne",
     "trap": "class item Spirit confused with the exotic helmet",
     "question": "is spirit of cyrtarachne the same as cyrtarachne's facade?",
-    "expectFacts": [
-      "grapple",
-      "grenade"
-    ],
-    "forbid": [
-      "identical"
-    ]
+    "expectFacts": ["grapple", "grenade"],
+    "forbid": ["identical"]
   }
 ]
