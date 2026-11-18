@@ -314,5 +314,12 @@
     "question": "where does the ferropotent armour set come from?",
     "expectFacts": ["solo|fireteam|ops|not recorded"],
     "forbid": ["deep stone crypt"]
+  },
+  {
+    "id": "new-player-tone",
+    "trap": "build sheet dumped on a new player",
+    "question": "i just started, whats a good strand warlock build?",
+    "expectFacts": ["strand|swarmers"],
+    "forbid": ["thread of"]
   }
 ]

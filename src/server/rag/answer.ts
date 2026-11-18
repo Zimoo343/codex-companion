@@ -1,4 +1,5 @@
 import { buildStructuredContext } from "./context.ts";
+import { audienceRules, resolveAudience } from "./tone.ts";
 import { embedQuestion, searchEntities, searchGuidesByVector, type GuideHit } from "./search.ts";
 import { createDatabase } from "../db/client.ts";
 
@@ -294,10 +295,17 @@ ${history}`
     `Question: ${question}`,
   ].filter(Boolean);
 
+  const systemContent = [SYSTEM_PROMPT, audienceRules(resolveAudience(question, history))]
+    .filter(Boolean)
+    .join(String.fromCharCode(10, 10));
+
   return {
     dataVersion: await currentDataVersion(),
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "system",
+        content: systemContent,
+      },
       { role: "user", content: parts.join("\n\n") },
     ],
     sources: [
