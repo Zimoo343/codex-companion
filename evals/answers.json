@@ -342,5 +342,12 @@
     "question": "is spirit of cyrtarachne the same as cyrtarachne's facade?",
     "expectFacts": ["grapple", "grenade"],
     "forbid": ["identical"]
+  },
+  {
+    "id": "stasis-build-not-arc",
+    "trap": "different subclass offered when the asked one is missing",
+    "question": "any build for warlock once I unlock stasis",
+    "expectFacts": ["stasis"],
+    "forbid": ["geomag", "arc warlock"]
   }
 ]

@@ -233,13 +233,17 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
     if (item.itemType !== 19) continue;
 
     const category = item.plug?.plugCategoryIdentifier ?? "";
-    const isAspect = category.endsWith(".aspects");
-    const isFragment = category.endsWith(".fragments");
+    // Bungie names Stasis aspects "totems" and its fragments "trinkets".
+    const isAspect = category.endsWith(".aspects") || category.endsWith(".totems");
+    const isFragment = category.endsWith(".fragments") || category.endsWith(".trinkets");
     const isArtifact = item.itemTypeDisplayName === "Artifact Perk";
     if (!isAspect && !isFragment && !isArtifact) continue;
 
     const name = item.displayProperties?.name;
-    if (!name || /^Empty .* Socket$/.test(name) || seenPlugs.has(name)) continue;
+    // Two elements can share an aspect name (Feed the Void exists for Void and
+    // Prismatic), so the name alone is not a unique key.
+    const plugKey = `${category}|${name}`;
+    if (!name || /^Empty .* Socket$/.test(name) || seenPlugs.has(plugKey)) continue;
 
     const ownDescription = stripHtml(item.displayProperties?.description);
     const perkDescription = (item.perks ?? [])
@@ -248,7 +252,7 @@ export function buildManifestBundle(manifestDb: DatabaseSync, version: string): 
       .join(" ");
     const description = ownDescription || perkDescription;
     if (!description) continue;
-    seenPlugs.add(name);
+    seenPlugs.add(plugKey);
 
     const kind = isArtifact ? "artifact perk" : isAspect ? "aspect" : "fragment";
     const [owner, element] = isAspect || isFragment ? category.split(".") : ["shared", ""];

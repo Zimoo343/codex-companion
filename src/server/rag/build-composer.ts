@@ -72,8 +72,10 @@ export async function composeBuild(question: string): Promise<{ text: string; or
       class: string;
       description: string;
     }>(
+      // Prismatic borrows aspects and fragments from every element, so it must not be
+      // limited to rows tagged "prism".
       `select name, kind, class, description from subclass_plugs
-        where element = $1
+        where ($1 = 'prismatic' or element = $1)
           and (kind = 'aspect' or kind = 'fragment')
           and (class = $2 or class = 'shared' or class = '' or class is null)`,
       [subclass, namedClass],
