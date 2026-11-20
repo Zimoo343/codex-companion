@@ -63,10 +63,28 @@ export function deriveStatFocus(text: string): StatFocus | null {
     return { signal, hits: found.length, terms };
   }).filter((entry) => entry.hits > 0);
 
+  // DPS builds split their points between Weapons and Super rather than picking one.
+  const dps = /\bdps\b|boss damage|damage phase|damage rotation/i.test(text);
+  if (dps) {
+    for (const stat of ["Weapons", "Super"]) {
+      const existing = matches.find((entry) => entry.signal.stat === stat);
+      if (existing) {
+        existing.hits += 2;
+        existing.terms = [...new Set([...existing.terms, "dps"])];
+      } else {
+        matches.push({
+          signal: SIGNALS.find((signal) => signal.stat === stat)!,
+          hits: 2,
+          terms: ["dps"],
+        });
+      }
+    }
+  }
+
   if (matches.length === 0) return null;
 
-  // Howl of the Storm crystals do not scale with the Melee stat above 100; the Super stat
-  // does. Community testing moved that build to 200 Super for this reason.
+  // Howl of the Storm crystals do not scale with Melee above 100, so the points go to
+  // Super for Glacial Quake. Super does not boost the crystals themselves.
   const howl = /howl of the storm|stasis crystal/i.test(text);
   if (howl) {
     const superSignal = matches.find((entry) => entry.signal.stat === "Super");
@@ -89,9 +107,11 @@ export function deriveStatFocus(text: string): StatFocus | null {
   const order = kept.map((entry) => entry.signal.stat);
   const reasons = kept.map((entry) => {
     const reason =
-      howl && entry.signal.stat === "Super"
-        ? "Melee stat does not scale Howl of the Storm crystals, so the points go into Super for Glacial Quake"
-        : entry.signal.reason;
+      dps && (entry.signal.stat === "Weapons" || entry.signal.stat === "Super")
+        ? "DPS builds put points into Weapons and Super together"
+        : howl && entry.signal.stat === "Super"
+          ? "Melee stat does not scale Howl of the Storm crystals, so the points go into Super for Glacial Quake"
+          : entry.signal.reason;
     return `${entry.signal.stat} (${entry.terms.join(", ")}): ${reason}`;
   });
 

@@ -356,5 +356,12 @@
     "question": "stasis titan howl of the storm build, what stat should I focus?",
     "expectFacts": ["super"],
     "forbid": ["stack melee for damage"]
+  },
+  {
+    "id": "dps-stat-focus",
+    "trap": "ability stat recommended for a DPS build",
+    "question": "what stats should a dps build focus?",
+    "expectFacts": ["weapons", "super"],
+    "forbid": ["stack melee"]
   }
 ]

@@ -89,6 +89,11 @@
         "stasis titan"
       ],
       "text": "Howl of the Storm is a Stasis Titan slide melee that creates crystals, and those crystals do not scale with the Melee stat above 100. Because Melee past 100 buys nothing for them, the community build skips it and pushes Super instead, which boosts Glacial Quake damage. Super does not boost Howl of the Storm crystals themselves. The usual spread is about 200 Super, 100 Melee and close to 100 Grenade. Synthoceps and Wormgod Caress still increase the crystal damage; Icefall Mantle is also used in this shell."
+    },
+    {
+      "id": "stat-policy-general",
+      "matches": ["stat priority", "stats", "stat focus", "what stats", "dps build"],
+      "text": "General stat policy: invest in the ability you spam. Grenade builds go Grenade, melee builds go Melee, Super builds go Super, and DPS builds put points into Weapons and Super together. Above 100 a stat adds damage for that ability, which is why the default is the ability the build repeats. Exceptions exist where a specific mechanic ignores the stat, such as Howl of the Storm crystals ignoring Melee above 100."
     }
   ]
 }
