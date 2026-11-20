@@ -5,6 +5,7 @@ import { getRotation, getXur } from "../live/bungie.ts";
 import { queryArmorSets } from "./armor-sets.ts";
 import { composeBuild } from "./build-composer.ts";
 import { queryExoticTrigger } from "./exotic-trigger.ts";
+import { queryStatFocus } from "./stat-focus.ts";
 import playerNotes from "../data/player-notes.json" with { type: "json" };
 
 type Row = Record<string, unknown>;
@@ -883,6 +884,7 @@ export async function buildStructuredContext(
   ]);
 
   parts.push(queryPlayerNotes(context));
+  parts.push(queryStatFocus(context));
 
   const origins: Origin[] = [];
   for (const part of parts) {

@@ -72,6 +72,23 @@
       "id": "spirit-cyrtarachne",
       "matches": ["cyrtarachne", "woven mail", "grenade", "prismatic", "hunter"],
       "text": "Cyrtarachne's Facade, the Hunter helmet, has the perk Acrobat's Focus: activating a Grapple grants Woven Mail. Spirit of Cyrtarachne on an exotic class item instead grants Woven Mail whenever you use your grenade, any grenade. They are different triggers and the Spirit is the broader one. Pairing Spirit of Cyrtarachne with Spirit of Renewal is a damage-resistance combo: Renewal covers the Duskfield field, Cyrtarachne covers the grenade use itself."
+    },
+    {
+      "id": "glacial-harvest",
+      "matches": ["glacial harvest", "stasis shard", "frost armor", "stasis warlock"],
+      "text": "Glacial Harvest is a Stasis Warlock aspect about shard generation: freezing and shattering feed Stasis shards, which grant Frost Armor and help grenade generation. It is not a Rift or class-ability stat signal."
+    },
+    {
+      "id": "howl-of-the-storm-scaling",
+      "matches": [
+        "howl of the storm",
+        "stasis crystal",
+        "synthoceps",
+        "wormgod",
+        "icefall",
+        "stasis titan"
+      ],
+      "text": "Howl of the Storm is a Stasis Titan slide melee that creates crystals, and those crystals do not scale with the Melee stat above 100. Because Melee past 100 buys nothing for them, the community build skips it and pushes Super instead, which boosts Glacial Quake damage. Super does not boost Howl of the Storm crystals themselves. The usual spread is about 200 Super, 100 Melee and close to 100 Grenade. Synthoceps and Wormgod Caress still increase the crystal damage; Icefall Mantle is also used in this shell."
     }
   ]
 }

@@ -349,5 +349,12 @@
     "question": "any build for warlock once I unlock stasis",
     "expectFacts": ["stasis"],
     "forbid": ["geomag", "arc warlock"]
+  },
+  {
+    "id": "howl-crystals-scale-with-super",
+    "trap": "melee stat recommended for Howl of the Storm crystals",
+    "question": "stasis titan howl of the storm build, what stat should I focus?",
+    "expectFacts": ["super"],
+    "forbid": ["stack melee for damage"]
   }
 ]
