@@ -377,5 +377,19 @@
     "question": "where does eyes unveiled come from and what dlc do I need?",
     "expectFacts": ["pit of heresy", "shadowkeep"],
     "forbid": ["not recorded"]
+  },
+  {
+    "id": "new-player-start",
+    "trap": "endgame gear offered to a brand-new player",
+    "question": "I just downloaded d2, where do I start",
+    "expectFacts": ["intro|start|subclass|playlist"],
+    "forbid": ["desert perpetual", "hezen", "rocket launcher"]
+  },
+  {
+    "id": "desert-perpetual-edge-of-fate",
+    "trap": "raid attributed to the wrong expansion",
+    "question": "where does the when and where come from",
+    "expectFacts": ["desert perpetual", "edge of fate"],
+    "forbid": ["final shape"]
   }
 ]

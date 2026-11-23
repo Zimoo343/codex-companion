@@ -30,3 +30,8 @@ test("only known audiences add rules", () => {
   assert.match(audienceRules("new"), /no percentages/i);
   assert.match(audienceRules("endgame"), /breakpoints/i);
 });
+
+test("a freshly downloaded game counts as new", () => {
+  assert.equal(classifyAudience("I just downloaded d2, where do I start"), "new");
+  assert.equal(classifyAudience("just installed, what do I do"), "new");
+});

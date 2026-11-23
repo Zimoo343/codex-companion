@@ -10,7 +10,7 @@ const RETURNING =
   /\b(returning|came back|come back|coming back|haven'?t played since|used to play|back after|stopped playing)/i;
 
 const NEW =
-  /\b(new player|new light|just started|beginner|brand new|i'?m new|noob|never played|start(ing)? out|what should i do first)/i;
+  /\b(new player|new light|just started|just downloaded|just installed|just got (?:the game|d2)|first time playing|beginner|brand new|i'?m new|noob|never played|start(ing)? out|what should i do first)/i;
 
 export function classifyAudience(text: string): Audience {
   // Endgame vocabulary is the strongest signal: a new player does not ask about lowmans.
