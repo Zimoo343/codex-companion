@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { sanitizeAnswer } from "../../src/lib/answer-text.ts";
 import type { ChatMessage } from "../chat-store";
-import { copyText, messageToMarkdown } from "../transcript";
+import { copyText } from "../transcript";
 
 function Sources({ message, id }: { message: ChatMessage; id: string }) {
   if (!message.sources || message.sources.length === 0) return null;
@@ -46,7 +46,54 @@ export function Message({ message }: { message: ChatMessage }) {
   if (message.role === "user") {
     return (
       <div className="message message-user">
-        <div className="bubble bubble-user">{message.text}</div>
+        <div className="bubble bubble-user">
+          <span className="bubble-user-text">{message.text}</span>
+          <button
+            type="button"
+            className={`copy-answer copy-prompt${copied ? " copy-answer-done" : ""}`}
+            aria-label={copied ? "Prompt copied" : "Copy prompt"}
+            title={copied ? "Prompt copied" : "Copy prompt"}
+            onClick={async () => {
+              const ok = await copyText(message.text.trim());
+              if (!ok) return;
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1400);
+            }}
+          >
+            {copied ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M5 12.5l4.5 4.5L19 7"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <rect
+                  x="9"
+                  y="9"
+                  width="10"
+                  height="11"
+                  rx="1.6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M15 9V6.6A1.6 1.6 0 0013.4 5H6.6A1.6 1.6 0 005 6.6v7.8A1.6 1.6 0 006.6 16H9"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
     );
   }
@@ -91,7 +138,7 @@ export function Message({ message }: { message: ChatMessage }) {
             aria-label={copied ? "Answer copied" : "Copy answer"}
             title={copied ? "Answer copied" : "Copy answer"}
             onClick={async () => {
-              const ok = await copyText(messageToMarkdown(message));
+              const ok = await copyText(message.text.trim());
               if (!ok) return;
               setCopied(true);
               window.setTimeout(() => setCopied(false), 1400);

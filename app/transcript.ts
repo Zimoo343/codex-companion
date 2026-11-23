@@ -9,16 +9,12 @@ function references(message: ChatMessage): string {
     (source) =>
       `- [${source.index}] ${source.title}${source.section ? ` — ${source.section}` : ""} (${source.sourceName}) ${source.url}`,
   );
-  return `\n${lines.join("\n")}`;
+  return `\n\n${lines.join("\n")}`;
 }
 
-export function messageToMarkdown(message: ChatMessage, question?: string): string {
-  const who = message.role === "user" ? "Q" : "A";
+function answerBlock(message: ChatMessage): string {
   const version = message.dataVersion ? `\n\n_manifest ${message.dataVersion}_` : "";
-  if (question && message.role === "assistant") {
-    return `**A:** ${message.text.trim()}${references(message)}${version}`;
-  }
-  return `**${who}:** ${message.text.trim()}${references(message)}${version}`;
+  return `**A:** ${message.text.trim()}${references(message)}${version}`;
 }
 
 export function sessionToMarkdown(session: ChatSession): string {
@@ -30,10 +26,10 @@ export function sessionToMarkdown(session: ChatSession): string {
   for (const message of session.messages) {
     if (message.role === "user") {
       if (current) blocks.push(current);
-      current = `**Q:** ${message.text.trim()}`;
+      current = `**P:** ${message.text.trim()}`;
       continue;
     }
-    current += `\n\n${messageToMarkdown(message)}`;
+    current += `\n\n${answerBlock(message)}`;
   }
   if (current) blocks.push(current);
 

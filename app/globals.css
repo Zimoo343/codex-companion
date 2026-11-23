@@ -684,8 +684,17 @@ input {
 }
 
 .bubble-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
   background: var(--acrylic-strong);
   border: 1px solid var(--border-strong);
+  white-space: pre-wrap;
+}
+
+.bubble-user-text {
+  align-self: flex-start;
   white-space: pre-wrap;
 }
 
@@ -1599,4 +1608,8 @@ body::after {
     width: 17px;
     height: 17px;
   }
+}
+
+.copy-prompt {
+  margin-top: 0;
 }
