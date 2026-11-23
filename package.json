@@ -25,7 +25,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "live:refresh": "node --env-file-if-exists=.env.local src/server/live/refresh.ts"
+    "live:refresh": "node --env-file-if-exists=.env.local src/server/live/refresh.ts",
+    "eval:retrieval": "node --env-file=.env.local src/server/rag/eval-retrieval.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

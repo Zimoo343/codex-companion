@@ -4,6 +4,14 @@ import { createDatabase } from "../db/client.ts";
 // An exotic that names one ability only pays out for that ability. Stating the trigger
 // in code stops the model from pairing Thunderclap armour with a Consecration loop.
 
+const flat = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[-’']/g, " ")
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/s+/g, " ")
+    .trim();
+
 const TRIGGERS: Array<[string, RegExp]> = [
   ["thunderclap", /\bthunderclap\b/i],
   ["melee", /\bmelee\b/i],
@@ -16,7 +24,7 @@ const TRIGGERS: Array<[string, RegExp]> = [
 export async function queryExoticTrigger(
   question: string,
 ): Promise<{ text: string; origins: Origin[] }> {
-  const lower = question.toLowerCase();
+  const lower = flat(question);
   if (!/\b(exotic|armou?r|build|pair|use|with)\b/i.test(question)) return { text: "", origins: [] };
 
   const { pool } = createDatabase();
@@ -25,9 +33,7 @@ export async function queryExoticTrigger(
       "select name, perks from armor where lower(tier) = 'exotic'",
     );
 
-    const named = rows.rows.filter(
-      (row) => row.name.length > 4 && lower.includes(row.name.toLowerCase()),
-    );
+    const named = rows.rows.filter((row) => row.name.length > 4 && lower.includes(flat(row.name)));
     if (named.length === 0) return { text: "", origins: [] };
 
     const lines = named.map((row) => {

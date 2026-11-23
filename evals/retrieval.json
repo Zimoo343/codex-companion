@@ -1,0 +1,156 @@
+[
+  {
+    "id": "europa-armour",
+    "question": "where do I get the europa armour set?",
+    "expectGuides": [],
+    "expectEntities": [],
+    "expectBlocks": ["Armour sets"]
+  },
+  {
+    "id": "distortion-loot",
+    "question": "how do distortions change public event loot",
+    "expectGuides": ["Return of the Director"],
+    "expectEntities": []
+  },
+  {
+    "id": "stasis-aspect",
+    "question": "what does bleak watcher do",
+    "expectGuides": [],
+    "expectEntities": ["Bleak Watcher"]
+  },
+  {
+    "id": "rocket-tier",
+    "question": "best rocket launcher for boss damage",
+    "expectGuides": [],
+    "expectEntities": ["Hezen Vengeance"]
+  },
+  {
+    "id": "perk-bait-and-switch",
+    "question": "what does bait and switch do",
+    "expectGuides": [],
+    "expectEntities": ["Bait and Switch"]
+  },
+  {
+    "id": "lost-sector-mechanic",
+    "question": "what is a lost sector",
+    "expectGuides": ["Lost Sector"],
+    "expectEntities": []
+  },
+  {
+    "id": "champion-mechanic",
+    "question": "how do champions work",
+    "expectGuides": ["Champion"],
+    "expectEntities": []
+  },
+  {
+    "id": "spirit-of-contact",
+    "question": "what does spirit of contact do",
+    "expectGuides": [],
+    "expectEntities": ["Spirit of Contact"]
+  },
+  {
+    "id": "howl-of-the-storm",
+    "question": "how does howl of the storm work",
+    "expectGuides": [],
+    "expectEntities": ["Howl of the Storm"]
+  },
+  {
+    "id": "gyallarhorn-source",
+    "question": "where does gjallarhorn come from",
+    "expectGuides": [],
+    "expectEntities": ["Gjallarhorn"]
+  },
+  {
+    "id": "portal-overhaul",
+    "question": "what changed about the portal in monument of triumph",
+    "expectGuides": ["Return of the Director"],
+    "expectEntities": []
+  },
+  {
+    "id": "weapon-tiering",
+    "question": "how does weapon tier upgrading work",
+    "expectGuides": ["Weapons, Artifacts"],
+    "expectEntities": []
+  },
+  {
+    "id": "subclass-definition",
+    "question": "what is a subclass",
+    "expectGuides": ["Subclass"],
+    "expectEntities": []
+  },
+  {
+    "id": "armour-set-bonus",
+    "question": "what does the ferropotent armour set do",
+    "expectGuides": [],
+    "expectEntities": ["Ferropotent"]
+  },
+  {
+    "id": "stats-focus-howl",
+    "question": "what stats should a howl of the storm titan build use",
+    "expectGuides": [],
+    "expectEntities": [],
+    "expectBlocks": ["Derived stat focus"]
+  },
+  {
+    "id": "constraints-heavy",
+    "question": "heavy precision alternatives to rockets with no self damage",
+    "expectGuides": [],
+    "expectEntities": [],
+    "expectBlocks": ["Weapon constraints from the conversation"]
+  },
+  {
+    "id": "exotic-trigger",
+    "question": "does point contact cannon brace work with consecration",
+    "expectGuides": [],
+    "expectEntities": ["Point-Contact Cannon Brace"],
+    "expectBlocks": ["Exotic trigger check"]
+  },
+  {
+    "id": "set-fit-threadlings",
+    "question": "which armour set helps threadlings",
+    "expectGuides": [],
+    "expectEntities": ["Flain"],
+    "expectBlocks": ["Armour sets"]
+  },
+  {
+    "id": "player-notes-distortion",
+    "question": "which destination is distorted right now",
+    "expectGuides": [],
+    "expectEntities": [],
+    "expectBlocks": ["Player-verified notes"]
+  },
+  {
+    "id": "live-xur",
+    "question": "is xur in town",
+    "expectGuides": [],
+    "expectEntities": [],
+    "expectBlocks": ["Live state"]
+  },
+  {
+    "id": "acquisition-vog",
+    "question": "is vault of glass free to play",
+    "expectGuides": [],
+    "expectEntities": [],
+    "expectBlocks": ["Acquisition"]
+  },
+  {
+    "id": "composed-void-warlock",
+    "question": "any build for void warlock",
+    "expectGuides": [],
+    "expectEntities": [],
+    "expectBlocks": ["Composed"]
+  },
+  {
+    "id": "d1-era-filter",
+    "question": "what was the gjallarhorn like in destiny 1",
+    "expectGuides": [],
+    "expectEntities": ["Gjallarhorn"],
+    "expectBlocks": []
+  },
+  {
+    "id": "howl-definition",
+    "question": "what does howl of the storm do",
+    "expectGuides": [],
+    "expectEntities": ["Howl of the Storm"]
+  }
+]
