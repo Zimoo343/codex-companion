@@ -363,5 +363,19 @@
     "question": "what stats should a dps build focus?",
     "expectFacts": ["weapons", "super"],
     "forbid": ["stack melee"]
+  },
+  {
+    "id": "heavy-precision-no-rockets",
+    "trap": "rocket or special weapon offered after being excluded",
+    "question": "heavy precision alternatives to rockets with no self damage risk?",
+    "expectFacts": ["linear fusion|sniper"],
+    "forbid": ["hezen vengeance"]
+  },
+  {
+    "id": "eyes-unveiled-shadowkeep",
+    "trap": "weapon source and expansion missing",
+    "question": "where does eyes unveiled come from and what dlc do I need?",
+    "expectFacts": ["pit of heresy", "shadowkeep"],
+    "forbid": ["not recorded"]
   }
 ]

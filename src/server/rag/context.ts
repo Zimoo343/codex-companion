@@ -6,6 +6,7 @@ import { queryArmorSets } from "./armor-sets.ts";
 import { composeBuild } from "./build-composer.ts";
 import { queryExoticTrigger } from "./exotic-trigger.ts";
 import { queryStatFocus } from "./stat-focus.ts";
+import { queryWeaponConstraints } from "./weapon-constraints.ts";
 import playerNotes from "../data/player-notes.json" with { type: "json" };
 
 type Row = Record<string, unknown>;
@@ -881,6 +882,7 @@ export async function buildStructuredContext(
     queryExpansions(context),
     queryAcquisition(context),
     queryExoticTrigger(context),
+    queryWeaponConstraints(context),
   ]);
 
   parts.push(queryPlayerNotes(context));
