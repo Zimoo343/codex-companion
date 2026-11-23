@@ -261,7 +261,9 @@ export default function Home() {
             {active && active.messages.length > 0 && (
               <button
                 type="button"
-                className="copy-transcript"
+                className={`copy-transcript${transcriptCopied ? " copy-transcript-done" : ""}`}
+                aria-label={transcriptCopied ? "Transcript copied" : "Copy transcript"}
+                title={transcriptCopied ? "Transcript copied" : "Copy transcript"}
                 onClick={async () => {
                   const ok = await copyText(sessionToMarkdown(active));
                   if (!ok) return;
@@ -269,7 +271,38 @@ export default function Home() {
                   window.setTimeout(() => setTranscriptCopied(false), 1400);
                 }}
               >
-                {transcriptCopied ? "Copied" : "Copy transcript"}
+                {transcriptCopied ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      d="M5 12.5l4.5 4.5L19 7"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <rect
+                      x="9"
+                      y="9"
+                      width="10"
+                      height="11"
+                      rx="1.6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
+                    <path
+                      d="M15 9V6.6A1.6 1.6 0 0013.4 5H6.6A1.6 1.6 0 005 6.6v7.8A1.6 1.6 0 006.6 16H9"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                )}
               </button>
             )}
           </header>
